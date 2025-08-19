@@ -1,8 +1,7 @@
 import { StatusBar, View } from 'react-native';
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import React, {  useState } from 'react';
 import AppNavigator from './navigation/AppNavigator';
-import UniversalSpeedDial from './components/UniversalSpeedDial';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
@@ -40,9 +39,6 @@ export default function App() {
       >
         <View style={{ flex: 1 }}>
           <AppNavigator />
-          {!hideSpeedDialScreens.includes(currentRouteName || '') && (
-            <UniversalSpeedDial />
-          )}
         </View>
       </NavigationContainer>
     </>

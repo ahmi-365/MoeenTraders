@@ -154,13 +154,7 @@ const handleGuestLogin = async () => {
                 <Text style={styles.signInButtonText}>Sign In</Text>
               </TouchableOpacity>
 
-              {/* Create Account Link */}
-              <View style={styles.createAccountContainer}>
-                <Text style={styles.createAccountText}>Don't have an account? </Text>
-                <TouchableOpacity onPress={handleCreateAccount}>
-                  <Text style={styles.createAccountLink}>Create an account</Text>
-                </TouchableOpacity>
-              </View>
+            
             </View>
           </View>
         </ScrollView>
