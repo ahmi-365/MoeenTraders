@@ -1,6 +1,6 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import React, { useEffect } from "react";
-import { Image, StyleSheet, View, ActivityIndicator } from "react-native";
+import { ActivityIndicator, Image, StyleSheet, View } from "react-native";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { useUserStore } from "../stores/userStore";
 
@@ -8,22 +8,24 @@ type Props = NativeStackScreenProps<RootStackParamList, "Splash">;
 
 export default function SplashScreen({ navigation }: Props) {
   const { loadUser, user, status } = useUserStore();
+useEffect(() => {
+  const init = async () => {
+    await loadUser();
 
-  useEffect(() => {
-    const init = async () => {
-      await loadUser();
+    setTimeout(() => {
+      const currentUser = useUserStore.getState().user;
+      const currentStatus = useUserStore.getState().status;
 
-      setTimeout(() => {
-        if (user || status === "guest") {
-          navigation.replace("MainTabs");
-        } else {
-          navigation.replace("Login");
-        }
-      }, 1000);
-    };
+      if (currentUser || currentStatus === "guest") {
+        navigation.replace("MainTabs");
+      } else {
+        navigation.replace("Login");
+      }
+    }, 1000);
+  };
 
-    init();
-  }, [navigation, loadUser, user, status]);
+  init();
+}, [navigation, loadUser]); 
 
   return (
     <View style={styles.container}>

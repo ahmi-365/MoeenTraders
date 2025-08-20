@@ -1,11 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import SplashScreen from '../screens/SplashScreen';
-import TabNavigator from './TabNavigator'; 
 import LoginScreen from '../screens/Auths/LoginScreen'; 
 import { StatusBar } from 'react-native';
-import HelpCenterScreen from '../screens/HelpCenterScreen';
-import ContactUsScreen from '../screens/ContactUsScreen';
 import DrawerNavigator from "../components/Drawer/DrawerNavigator";
 import HomeScreen from '@/screens/HomeScreen';
 
@@ -31,11 +28,8 @@ const AppNavigator = () => {
     
     <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Splash" component={SplashScreen} />
-      {/* <Stack.Screen name="Home" component={HomeScreen} /> */}
       <Stack.Screen name="Login" component={LoginScreen} />
-<Stack.Screen name="MainTabs" component={DrawerNavigator} />
-      <Stack.Screen name="HelpCenter" component={HelpCenterScreen} />
-      <Stack.Screen name="ContactUs" component={ContactUsScreen} />
+      <Stack.Screen name="MainTabs" component={DrawerNavigator} />
     </Stack.Navigator>
   );
 };

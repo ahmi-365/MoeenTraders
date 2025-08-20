@@ -1,67 +1,160 @@
 import React, { useEffect, useState } from "react";
-import { StatusBar, StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
-import InfoCard from "../components/DashboardCard/InfoCard"; 
-import PurchasesSalesReport from "../components/DashboardCard/PurchaseSalesGraph";
-import SalesReturnReport from "../components/DashboardCard/SalesReturnReport";
+import {
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  RefreshControl,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
+import InfoCard from "../components/DashboardCard/InfoCard";
+import ReusableTable from "../components/Table/ReusableTable";
+import { useMonthYear } from "../context/MonthYearContext";
+import {
+  DashboardResponse,
+  InventoryAlert,
+  TopPerformer,
+  TableColumn,
+} from "../types/dasboard"; // 👈 create a file for types
 
 export default function HomeScreen() {
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
+  const { month, year } = useMonthYear();
+  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchDashboardData = async (month, year) => {
+  const apiUrl = `https://dewan-chemicals.majesticsofts.com/api/dashboard?month=${month}&year=${year}`;
+
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // 👇 API URL
-      const apiUrl = `https://dewan-chemicals.majesticsofts.com/api/dashboard?month=${month}&year=${year}`;
-      // 👇 Token (replace with your auth logic / AsyncStorage etc.)
-      const token = "YOUR_TOKEN_HERE";
+      console.log("Fetching dashboard for:", month, year);
+      const response = await fetch(apiUrl);
+      const data: DashboardResponse = await response.json();
 
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-       
-console.log(response)
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
       setDashboardData(data);
+      console.log("Dashboard data:", data);
     } catch (err) {
-      setError(err.message);
+      setError("Failed to load dashboard data");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  // Load initially
   useEffect(() => {
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
-    fetchDashboardData(currentMonth, currentYear);
-  }, []);
+    fetchDashboardData();
+  }, [month, year]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
-    fetchDashboardData(currentMonth, currentYear);
+    fetchDashboardData();
+  };
+
+  // 🔹 Columns for Inventory Alerts
+  const inventoryAlertsColumns: TableColumn<InventoryAlert>[] = [
+    {
+      key: "name",
+      title: "Product Name",
+      flex: 2,
+      cellStyle: { paddingRight: 8 },
+    },
+    {
+      key: "warehouse_name",
+      title: "Warehouse",
+      flex: 1,
+      cellStyle: { paddingHorizontal: 4 },
+    },
+    {
+      key: "quantity",
+      title: "Current Stock",
+      flex: 1.2,
+      render: (item) => `${item.quantity} ${item.unit_name}`,
+      cellStyle: { alignItems: "center" },
+      style: { textAlign: "center", fontWeight: "600" },
+    },
+    {
+      key: "alert_quantity",
+      title: "Alert Level",
+      flex: 1,
+      cellStyle: { alignItems: "center" },
+      style: {
+        textAlign: "center",
+        fontWeight: "600",
+        color: "#FF5722",
+      },
+    },
+  ];
+
+  // 🔹 Columns for Top Performers
+  const topPerformersColumns: TableColumn<TopPerformer>[] = [
+    {
+      key: "name",
+      title: "Product Name",
+      flex: 2,
+      cellStyle: { paddingRight: 8 },
+      style: { fontWeight: "600" },
+    },
+    {
+      key: "sku",
+      title: "SKU",
+      flex: 1,
+      cellStyle: { paddingHorizontal: 4 },
+      style: {
+        fontSize: 12,
+        color: "#666",
+        backgroundColor: "#f8f9fa",
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+      },
+    },
+    {
+      key: "total_sale",
+      title: "Total Sales",
+      flex: 1,
+      cellStyle: { alignItems: "center" },
+      style: {
+        textAlign: "center",
+        fontWeight: "700",
+        color: "#4CAF50",
+      },
+    },
+    {
+      key: "total_sale_weight",
+      title: "Weight Sold",
+      flex: 1.2,
+      render: (item) => {
+        const unit = item.unit?.name || "units";
+        return `${item.total_sale_weight} ${unit}`;
+      },
+      cellStyle: { alignItems: "center" },
+      style: {
+        textAlign: "center",
+        fontSize: 12,
+        color: "#666",
+      },
+    },
+  ];
+
+  const handleInventoryAlertPress = (item: InventoryAlert, index: number) => {
+    console.log("Inventory alert pressed:", item);
+  };
+
+  const handleTopPerformerPress = (item: TopPerformer, index: number) => {
+    console.log("Top performer pressed:", item);
   };
 
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1E5B50" />
+        <ActivityIndicator size="large" color="#2196F3" />
+        <Text style={styles.loadingText}>Loading dashboard...</Text>
       </View>
     );
   }
@@ -69,10 +162,10 @@ console.log(response)
   if (error) {
     return (
       <View style={styles.center}>
-        <Text style={{ color: "red" }}>Failed to load data: {error}</Text>
-        <Text onPress={onRefresh} style={{ color: "blue", marginTop: 10 }}>
-          Retry
-        </Text>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity onPress={onRefresh} style={styles.retryButton}>
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -80,7 +173,7 @@ console.log(response)
   if (!dashboardData) {
     return (
       <View style={styles.center}>
-        <Text>No data available.</Text>
+        <Text style={styles.noDataText}>No data available.</Text>
       </View>
     );
   }
@@ -89,70 +182,177 @@ console.log(response)
 
   return (
     <View style={styles.container}>
-      <StatusBar translucent backgroundColor="#f8f9fa" barStyle="dark-content" />
+      <StatusBar
+        translucent
+        backgroundColor="#ffffff"
+        barStyle="dark-content"
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
-        {/* Dashboard Section */}
-        <Text style={styles.sectionTitle}>Dashboard</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Dashboard Overview</Text>
+          <Text style={styles.headerSubtitle}>{month}/{year}</Text>
+        </View>
+
+        {/* Overview Cards */}
+        <Text style={styles.sectionTitle}>Overview</Text>
         <View style={styles.cardRow}>
-          <InfoCard number={widgets.totalProduct} label="Total Products" icon="cube-outline" />
-          <InfoCard number={widgets.totalCustomer} label="Total Customers" icon="people-outline" />
+          <InfoCard number={widgets.total_product} label="Total Products" icon="cube-outline" color="#4CAF50" />
+          <InfoCard number={widgets.total_customer} label="Total Customers" icon="people-outline" color="#2196F3" />
         </View>
         <View style={styles.cardRow}>
-          <InfoCard number={widgets.totalSupplier} label="Total Suppliers" icon="storefront-outline" />
-          <InfoCard number={widgets.totalCategory} label="Total Categories" icon="albums-outline" />
+          <InfoCard number={widgets.total_supplier} label="Total Suppliers" icon="storefront-outline" color="#FF9800" />
+          <InfoCard number={widgets.total_category} label="Total Categories" icon="albums-outline" color="#9C27B0" />
         </View>
 
         {/* Sales Section */}
-        <Text style={styles.sectionTitle}>Sales</Text>
+        <Text style={styles.sectionTitle}>Sales Performance</Text>
         <View style={styles.cardRow}>
-          <InfoCard number={widgets.totalSale} label={`Total Sales (${widgets.totalSaleCount})`} icon="cash-outline" />
-          <InfoCard number={widgets.totalSaleReturn} label={`Sales Return (${widgets.totalSaleReturnCount})`} icon="arrow-undo-outline" />
+          <InfoCard 
+            number={widgets.total_sale} 
+            label={`Total Sales (${widgets.total_sale_count})`} 
+            icon="cash-outline" 
+            color="#4CAF50"
+          />
+          <InfoCard 
+            number={widgets.total_sale_return} 
+            label={`Sales Return (${widgets.total_sale_return_count})`} 
+            icon="arrow-undo-outline" 
+            color="#FF5722"
+          />
         </View>
 
         {/* Purchases Section */}
-        <Text style={styles.sectionTitle}>Purchases</Text>
+        <Text style={styles.sectionTitle}>Purchase Management</Text>
         <View style={styles.cardRow}>
-          <InfoCard number={widgets.totalPurchase} label={`Total Purchases (${widgets.totalPurchaseCount})`} icon="cart-outline" />
-          <InfoCard number={widgets.totalPurchaseReturn} label={`Purchase Return (${widgets.totalPurchaseReturnCount})`} icon="refresh-outline" />
+          <InfoCard 
+            number={widgets.total_purchase} 
+            label={`Total Purchases (${widgets.total_purchase_count})`} 
+            icon="cart-outline" 
+            color="#2196F3"
+          />
+          <InfoCard 
+            number={widgets.total_purchase_return} 
+            label={`Purchase Return (${widgets.total_purchase_return_count})`} 
+            icon="refresh-outline" 
+            color="#FF9800"
+          />
         </View>
 
-        {/* 📊 Charts Section */}
-        <PurchasesSalesReport reportData={dashboardData.purchaseAndSaleReport} />
-        <SalesReturnReport reportData={dashboardData.saleAndSaleReturnReport} />
+        {/* Inventory Alerts Table */}
+        <ReusableTable
+          title="Inventory Alerts"
+          data={dashboardData.alertProductsQty}
+          columns={inventoryAlertsColumns}
+          onRowPress={handleInventoryAlertPress}
+          emptyStateConfig={{
+            emptyTitle: "No Low Stock Alerts",
+            emptyMessage: "All products are well stocked",
+            emptyIcon: "✅",
+          }}
+        />
+
+        {/* Top Performers Table */}
+        <ReusableTable
+          title="Top Performers"
+          data={dashboardData.topSellingProducts}
+          columns={topPerformersColumns}
+          onRowPress={handleTopPerformerPress}
+          showIndex={true}
+          emptyStateConfig={{
+            emptyTitle: "No Sales Data",
+            emptyMessage: "No top selling products for this period",
+            emptyIcon: "📊",
+          }}
+        />
       </ScrollView>
     </View>
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#f5f7fa",
   },
   scrollContent: {
-    paddingHorizontal: 12,
-    paddingBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-    marginTop: 10,
-    marginBottom: 6,
-  },
-  cardRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#f5f7fa",
+  },
+  header: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 20,
+    marginVertical: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: "#666",
+    fontWeight: "500",
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#1a1a1a",
+    marginTop: 24,
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+  cardRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  
+  // Loading and Error States
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666",
+  },
+  errorText: {
+    color: "#F44336",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: "#2196F3",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: "#ffffff",
+    fontWeight: "600",
+  },
+  noDataText: {
+    fontSize: 16,
+    color: "#666",
   },
 });

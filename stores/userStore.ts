@@ -4,9 +4,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export type UserStatus = "guest" | "registered" | null;
 
 export interface User {
-  id: string;
+  id: number;
+  role_id?: number;
   name: string;
   email: string;
+  mobile?: string | null;
+  username?: string;
+  image?: string;
+  status?: number | string;
+  created_at?: string | null;
+  updated_at?: string | null;
+  token?: string;
 }
 
 interface UserState {
@@ -36,11 +44,11 @@ export const useUserStore = create<UserState>((set) => ({
   loadUser: async () => {
     try {
       const userData = await AsyncStorage.getItem("userData");
-      const guestStatus = await AsyncStorage.getItem("userStatus");
+      const storedStatus = await AsyncStorage.getItem("userStatus");
 
       if (userData) {
-        set({ user: JSON.parse(userData), status: "registered" });
-      } else if (guestStatus === "guest") {
+        set({ user: JSON.parse(userData), status: storedStatus as UserStatus });
+      } else if (storedStatus === "guest") {
         set({ user: null, status: "guest" });
       } else {
         set({ user: null, status: null });

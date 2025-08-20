@@ -8,6 +8,7 @@ interface InfoCardProps {
   number: number | string;
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
+   color?: string;
 }
 
 const InfoCard: React.FC<InfoCardProps> = ({ number, label, icon }) => {

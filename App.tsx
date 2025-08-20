@@ -1,32 +1,45 @@
-import { StatusBar, View } from 'react-native';
-import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
-import React, {  useState } from 'react';
-import AppNavigator from './navigation/AppNavigator';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StatusBar, View, ActivityIndicator } from "react-native";
+import { NavigationContainer, useNavigationContainerRef } from "@react-navigation/native";
+import React, { useEffect, useState } from "react";
+import AppNavigator from "./navigation/AppNavigator";
+import { useUserStore } from "./stores/userStore"; 
+import { MonthYearProvider } from "./context/MonthYearContext";  
 
 export default function App() {
   const navigationRef = useNavigationContainerRef();
   const [currentRouteName, setCurrentRouteName] = useState<string | undefined>();
-// useEffect(() => {
-//   const logAllAsyncStorage = async () => {
-//     try {
-//       const keys = await AsyncStorage.getAllKeys();
-//       const stores = await AsyncStorage.multiGet(keys);
+  const [isAppReady, setIsAppReady] = useState(false);
 
-//       console.log('🧾 AsyncStorage Contents:');
-//       stores.forEach(([key, value]) => {
-//         console.log(`${key}:`, value);
-//       });
-//     } catch (e) {
-//       console.error('Error reading AsyncStorage:', e);
-//     }
-//   };
+  useEffect(() => {
+    const init = async () => {
+      try {
+        await useUserStore.getState().loadUser();
+      } catch (e) {
+        console.error("Error restoring user:", e);
+      } finally {
+        setIsAppReady(true);
+      }
+    };
+    init();
+  }, []);
 
-//   logAllAsyncStorage();
-// }, []);
-  const hideSpeedDialScreens = ['Splash', 'Login', 'Register','BookInspection'];
+  if (!isAppReady) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#f8f9fa",
+        }}
+      >
+        <ActivityIndicator size="large" color="#2c3e50" />
+      </View>
+    );
+  }
+
   return (
-    <>
+    <MonthYearProvider>
       <StatusBar translucent backgroundColor="#f8f9fa" barStyle="dark-content" />
       <NavigationContainer
         ref={navigationRef}
@@ -41,6 +54,6 @@ export default function App() {
           <AppNavigator />
         </View>
       </NavigationContainer>
-    </>
+    </MonthYearProvider>
   );
 }
