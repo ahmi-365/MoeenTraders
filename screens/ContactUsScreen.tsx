@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   button: {
-    backgroundColor: "#1E5B50",
+    backgroundColor: "#FF8F3C",
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: "center",

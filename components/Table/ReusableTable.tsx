@@ -1,5 +1,14 @@
-import React, { ReactNode, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
+import React, { ReactNode, useState } from "react";
+import {
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 
 export type Column<T> = {
   key: keyof T | string;
@@ -60,10 +69,10 @@ const DateFilter = ({
 }) => {
   const formatDateForDisplay = (date: Date | null) => {
     if (!date) return null;
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -71,14 +80,15 @@ const DateFilter = ({
     <View style={styles.filterContainer}>
       <TouchableOpacity style={styles.dateButton} onPress={onDateRangeSelect}>
         <Text style={styles.dateButtonText}>
-          {startDate && endDate 
-            ? `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}`
-            : placeholder
-          }
+          {startDate && endDate
+            ? `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(
+                endDate
+              )}`
+            : placeholder}
         </Text>
         <Text style={styles.dateIcon}>📅</Text>
       </TouchableOpacity>
-      
+
       {(startDate || endDate) && (
         <TouchableOpacity style={styles.clearButton} onPress={onClearFilter}>
           <Text style={styles.clearButtonText}>Clear</Text>
@@ -112,13 +122,13 @@ const SimpleDatePicker = ({
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     const lastWeek = new Date(today);
     lastWeek.setDate(lastWeek.getDate() - 7);
-    
+
     const lastMonth = new Date(today);
     lastMonth.setMonth(lastMonth.getMonth() - 1);
-    
+
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const startOfYear = new Date(today.getFullYear(), 0, 1);
 
@@ -158,57 +168,86 @@ const SimpleDatePicker = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+    <Modal
+    visible={visible}
+    transparent
+    animationType="slide"
+    onRequestClose={handleClose}
+  >
+    {/* ✅ Agar user overlay pe tap kare to modal band ho */}
+    <TouchableWithoutFeedback onPress={handleClose}>
       <View style={styles.datePickerOverlay}>
-        <View style={styles.datePickerContainer}>
-          <Text style={styles.datePickerTitle}>Select Date Range</Text>
-          
-          <ScrollView style={styles.quickSelectScrollView} showsVerticalScrollIndicator={false}>
-            <View style={styles.quickSelectContainer}>
-              <Text style={styles.quickSelectLabel}>Quick Select:</Text>
-              {dateRangeOptions.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.quickSelectButton,
-                    (tempStartDate?.toDateString() === option.start.toDateString() &&
-                     tempEndDate?.toDateString() === option.end.toDateString()) && 
-                    styles.selectedQuickSelect
-                  ]}
-                  onPress={() => handleQuickSelect(option.start, option.end)}
-                >
-                  <Text style={[
-                    styles.quickSelectButtonText,
-                    (tempStartDate?.toDateString() === option.start.toDateString() &&
-                     tempEndDate?.toDateString() === option.end.toDateString()) && 
-                    styles.selectedQuickSelectText
-                  ]}>
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
+        {/* ✅ Yeh inner container ke click ignore karega */}
+        <TouchableWithoutFeedback>
+          <View style={styles.datePickerContainer}>
+            <Text style={styles.datePickerTitle}>Select Date Range</Text>
 
-          {tempStartDate && tempEndDate && (
-            <View style={styles.selectedDatesContainer}>
-              <Text style={styles.selectedDatesText}>
-                Selected: {tempStartDate.toLocaleDateString()} - {tempEndDate.toLocaleDateString()}
-              </Text>
-            </View>
-          )}
+            <ScrollView
+              style={styles.quickSelectScrollView}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.quickSelectContainer}>
+                <Text style={styles.quickSelectLabel}>Quick Select:</Text>
+                {dateRangeOptions.map((option, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.quickSelectButton,
+                      tempStartDate?.toDateString() ===
+                        option.start.toDateString() &&
+                        tempEndDate?.toDateString() ===
+                          option.end.toDateString() &&
+                        styles.selectedQuickSelect,
+                    ]}
+                    onPress={() =>
+                      handleQuickSelect(option.start, option.end)
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.quickSelectButtonText,
+                        tempStartDate?.toDateString() ===
+                          option.start.toDateString() &&
+                          tempEndDate?.toDateString() ===
+                            option.end.toDateString() &&
+                          styles.selectedQuickSelectText,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
 
-          <View style={styles.datePickerButtons}>
-            <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
-              <Text style={styles.confirmButtonText}>Confirm</Text>
-            </TouchableOpacity>
+            {tempStartDate && tempEndDate && (
+              <View style={styles.selectedDatesContainer}>
+                <Text style={styles.selectedDatesText}>
+                  Selected: {tempStartDate.toLocaleDateString()} -{" "}
+                  {tempEndDate.toLocaleDateString()}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.datePickerButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleClose}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={handleConfirm}
+              >
+                <Text style={styles.confirmButtonText}>Confirm</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </View>
-    </Modal>
+    </TouchableWithoutFeedback>
+  </Modal>
   );
 };
 
@@ -225,9 +264,9 @@ function ReusableTable<T>({
   maxHeight, // New prop to control table height
 }: ReusableTableProps<T>) {
   const {
-    emptyTitle = 'No Data Available',
-    emptyMessage = 'There are no items to display',
-    emptyIcon = '📊',
+    emptyTitle = "No Data Available",
+    emptyMessage = "There are no items to display",
+    emptyIcon = "📊",
   } = emptyStateConfig;
 
   // Date filter state
@@ -244,13 +283,32 @@ function ReusableTable<T>({
   const renderCell = (item: T, column: Column<T>, index: number) => {
     if (column.render) {
       const cellContent = column.render(item, index);
-      if (typeof cellContent === 'string' || typeof cellContent === 'number') {
-        return <Text style={[styles.cellText, column.style]} numberOfLines={2} ellipsizeMode="tail">{cellContent}</Text>;
+      if (typeof cellContent === "string" || typeof cellContent === "number") {
+        return (
+          <Text
+            style={[styles.cellText, column.style]}
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
+            {cellContent}
+          </Text>
+        );
       }
       return cellContent as ReactNode;
     }
-    const value = column.key.toString().split('.').reduce((obj: any, k) => obj?.[k], item);
-    return <Text style={[styles.cellText, column.style]} numberOfLines={2} ellipsizeMode="tail">{value ?? '-'}</Text>;
+    const value = column.key
+      .toString()
+      .split(".")
+      .reduce((obj: any, k) => obj?.[k], item);
+    return (
+      <Text
+        style={[styles.cellText, column.style]}
+        numberOfLines={2}
+        ellipsizeMode="tail"
+      >
+        {value ?? "-"}
+      </Text>
+    );
   };
 
   const handleDateRangeSelect = (start: Date, end: Date) => {
@@ -261,11 +319,10 @@ function ReusableTable<T>({
     dateFilter?.onDateRangeChange?.(null, null);
   };
 
-
   return (
     <View style={[styles.container, containerStyle]}>
       {title && <Text style={styles.sectionTitle}>{title}</Text>}
-      
+
       {/* Date Filter */}
       {dateFilter?.enabled && (
         <DateFilter
@@ -289,7 +346,11 @@ function ReusableTable<T>({
           </View>
 
           {/* Horizontal scroll for table content */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.horizontalScroll}
+          >
             <View style={styles.tableContent}>
               {/* Header */}
               <View style={styles.headerRow}>
@@ -302,12 +363,15 @@ function ReusableTable<T>({
                   <View
                     key={index}
                     style={[
-                      styles.headerCell, 
-                      { minWidth: 100, flex: column.flex || 1 }, 
-                      column.headerStyle
+                      styles.headerCell,
+                      { minWidth: 100, flex: column.flex || 1 },
+                      column.headerStyle,
                     ]}
                   >
-                    <Text style={[styles.headerText, column.headerTextStyle]} numberOfLines={1}>
+                    <Text
+                      style={[styles.headerText, column.headerTextStyle]}
+                      numberOfLines={1}
+                    >
                       {column.title}
                     </Text>
                   </View>
@@ -316,7 +380,7 @@ function ReusableTable<T>({
 
               {/* Data Rows - FIXED: Removed limiting ScrollView */}
               <View style={maxHeight ? { maxHeight } : {}}>
-                <ScrollView 
+                <ScrollView
                   showsVerticalScrollIndicator={true}
                   style={maxHeight ? { maxHeight } : { maxHeight: 800 }} // Increased default height
                   nestedScrollEnabled={true}
@@ -338,9 +402,9 @@ function ReusableTable<T>({
                           <View
                             key={`cell-${rowIndex}-${colIndex}`}
                             style={[
-                              styles.dataCell, 
-                              { minWidth: 100, flex: column.flex || 1 }, 
-                              column.cellStyle
+                              styles.dataCell,
+                              { minWidth: 100, flex: column.flex || 1 },
+                              column.cellStyle,
                             ]}
                           >
                             {renderCell(item, column, rowIndex)}
@@ -357,7 +421,8 @@ function ReusableTable<T>({
           {/* Hint text */}
           <View style={styles.hintContainer}>
             <Text style={styles.hintText}>
-              💡 Tap any row to view complete details • Scroll to see more entries
+              💡 Tap any row to view complete details • Scroll to see more
+              entries
             </Text>
           </View>
         </View>
@@ -377,196 +442,196 @@ function ReusableTable<T>({
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    marginBottom: 16 
+  container: {
+    marginBottom: 16,
   },
-  sectionTitle: { 
-    fontSize: 20, 
-    fontWeight: '600', 
-    color: '#1a1a1a', 
-    marginBottom: 12, 
-    marginLeft: 4 
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#1a1a1a",
+    marginBottom: 12,
+    marginLeft: 4,
   },
   tableContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
 
   // Debug info container
   debugInfoContainer: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: "#e3f2fd",
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#bbdefb',
+    borderBottomColor: "#bbdefb",
   },
   debugInfoText: {
     fontSize: 12,
-    color: '#1976d2',
-    fontWeight: '500',
-    textAlign: 'center',
+    color: "#1976d2",
+    fontWeight: "500",
+    textAlign: "center",
   },
 
   horizontalScroll: {
     flex: 1,
   },
   tableContent: {
-    minWidth: '100%',
+    minWidth: "100%",
   },
-  headerRow: { 
-    flexDirection: 'row', 
-    backgroundColor: '#f8f9fa', 
-    borderBottomWidth: 1, 
-    borderBottomColor: '#e9ecef', 
-    paddingVertical: 14, 
-    paddingHorizontal: 12 
+  headerRow: {
+    flexDirection: "row",
+    backgroundColor: "#f8f9fa",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e9ecef",
+    paddingVertical: 14,
+    paddingHorizontal: 12,
   },
-  headerCell: { 
-    justifyContent: 'center', 
+  headerCell: {
+    justifyContent: "center",
     paddingHorizontal: 6,
-    alignItems: 'flex-start'
+    alignItems: "flex-start",
   },
-  headerText: { 
-    fontSize: 13, 
-    fontWeight: '600', 
-    color: '#495057', 
-    textAlign: 'left'
+  headerText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#495057",
+    textAlign: "left",
   },
-  dataRow: { 
-    flexDirection: 'row', 
-    paddingVertical: 14, 
-    paddingHorizontal: 12, 
-    borderBottomWidth: 1, 
-    borderBottomColor: '#f1f3f4', 
-    backgroundColor: '#fff',
-    minHeight: 50
+  dataRow: {
+    flexDirection: "row",
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f3f4",
+    backgroundColor: "#fff",
+    minHeight: 50,
   },
-  dataCell: { 
-    justifyContent: 'center', 
+  dataCell: {
+    justifyContent: "center",
     paddingHorizontal: 6,
-    alignItems: 'flex-start'
+    alignItems: "flex-start",
   },
-  cellText: { 
-    fontSize: 13, 
-    color: '#1a1a1a', 
-    textAlign: 'left',
-    lineHeight: 16
+  cellText: {
+    fontSize: 13,
+    color: "#1a1a1a",
+    textAlign: "left",
+    lineHeight: 16,
   },
-  indexColumn: { 
+  indexColumn: {
     minWidth: 40,
     flex: 0,
-    alignItems: 'center' 
+    alignItems: "center",
   },
-  indexText: { 
-    fontSize: 13, 
-    fontWeight: '600', 
-    color: '#666' 
+  indexText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#666",
   },
   hintContainer: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e9ecef'
+    borderTopColor: "#e9ecef",
   },
   hintText: {
     fontSize: 12,
-    color: '#6c757d',
-    textAlign: 'center',
-    fontStyle: 'italic'
+    color: "#6c757d",
+    textAlign: "center",
+    fontStyle: "italic",
   },
-  emptyState: { 
-    backgroundColor: '#fff', 
-    borderRadius: 12, 
-    padding: 32, 
-    alignItems: 'center', 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 2 }, 
-    shadowOpacity: 0.1, 
-    shadowRadius: 4, 
-    elevation: 3 
+  emptyState: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 32,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  emptyIcon: { 
-    fontSize: 48, 
-    marginBottom: 16 
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
   },
-  emptyTitle: { 
-    fontSize: 18, 
-    fontWeight: '600', 
-    color: '#1a1a1a', 
-    marginBottom: 8 
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1a1a1a",
+    marginBottom: 8,
   },
-  emptyMessage: { 
-    fontSize: 14, 
-    color: '#666', 
-    textAlign: 'center' 
+  emptyMessage: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
   },
 
   // Date Filter Styles
   filterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 12,
     paddingHorizontal: 4,
     gap: 10,
     marginBottom: 8,
   },
   dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1E5B50',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#183284",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   dateButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   dateIcon: {
     fontSize: 16,
   },
   clearButton: {
-    backgroundColor: '#ff6b6b',
+    backgroundColor: "#ff6b6b",
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 6,
   },
   clearButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   // Date Picker Modal Styles
   datePickerOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   datePickerContainer: {
-    width: '90%',
-    backgroundColor: 'white',
+    width: "90%",
+    backgroundColor: "white",
     borderRadius: 15,
     padding: 20,
-    maxHeight: '80%',
+    maxHeight: "80%",
   },
   datePickerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 20,
-    color: '#333',
+    color: "#333",
   },
   quickSelectScrollView: {
     maxHeight: 300,
@@ -576,71 +641,71 @@ const styles = StyleSheet.create({
   },
   quickSelectLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 10,
-    color: '#333',
+    color: "#333",
   },
   quickSelectButton: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: "#e9ecef",
   },
   selectedQuickSelect: {
-    backgroundColor: '#1E5B50',
-    borderColor: '#1E5B50',
+    backgroundColor: "#FF8F3C",
+    borderColor: "#FF8F3C",
   },
   quickSelectButtonText: {
     fontSize: 14,
-    color: '#495057',
+    color: "#495057",
   },
   selectedQuickSelectText: {
-    color: 'white',
-    fontWeight: '600',
+    color: "white",
+    fontWeight: "600",
   },
   selectedDatesContainer: {
-    backgroundColor: '#e8f5e8',
+    backgroundColor: "#e8f5e8",
     padding: 12,
     borderRadius: 8,
     marginBottom: 20,
   },
   selectedDatesText: {
     fontSize: 14,
-    color: '#2e7d32',
-    textAlign: 'center',
-    fontWeight: '500',
+    color: "#2e7d32",
+    textAlign: "center",
+    fontWeight: "500",
   },
   datePickerButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: 10,
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: '#6c757d',
+    backgroundColor: "#6c757d",
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   confirmButton: {
     flex: 1,
-    backgroundColor: '#1E5B50',
+    backgroundColor: "#183284",
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   confirmButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
 

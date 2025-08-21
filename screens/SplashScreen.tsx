@@ -30,7 +30,7 @@ useEffect(() => {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../assets/images/moeentraders.png")}
+        source={require("../assets/images/icon.png")}
         style={styles.logo}
       />
       <ActivityIndicator size="large" color="#DAA520" style={{ marginTop: 20 }} />

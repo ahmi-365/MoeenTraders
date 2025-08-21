@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginHorizontal: 4,
   },
-  paginationActive: { backgroundColor: "#1E5B50" },
+  paginationActive: { backgroundColor: "#FF8F3C" },
   paginationText: { fontSize: 14, color: "#333", fontWeight: "600" },
   paginationTextActive: { fontSize: 14, color: "#0D2034", fontWeight: "bold" },
 });

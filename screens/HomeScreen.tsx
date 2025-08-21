@@ -109,20 +109,20 @@ export default function HomeScreen() {
     },
   ];
 
-// Utility function
-const formatCurrency = (value: number | string) => {
-  let num = typeof value === "string" ? parseFloat(value) : value;
+  // Utility function
+  const formatCurrency = (value: number | string) => {
+    let num = typeof value === "string" ? parseFloat(value) : value;
 
-  if (isNaN(num)) return "PKR 0";
+    if (isNaN(num)) return "PKR 0";
 
-  if (num >= 1000000) {
-    return `PKR ${(num / 1000000).toFixed(2)}M`;
-  } else if (num >= 1000) {
-    return `PKR ${(num / 1000).toFixed(0)}K`;
-  } else {
-    return `PKR ${num.toFixed(0)}`;
-  }
-};
+    if (num >= 1000000) {
+      return `PKR ${(num / 1000000).toFixed(2)}M`;
+    } else if (num >= 1000) {
+      return `PKR ${(num / 1000).toFixed(0)}K`;
+    } else {
+      return `PKR ${num.toFixed(0)}`;
+    }
+  };
   const topPerformersColumns: TableColumn<TopPerformer>[] = [
     {
       key: "name",
@@ -153,7 +153,7 @@ const formatCurrency = (value: number | string) => {
       style: {
         textAlign: "center",
         fontWeight: "700",
-        color: "#1E5B50",
+        color: "#FF8F3C",
       },
     },
     {
@@ -248,71 +248,78 @@ const formatCurrency = (value: number | string) => {
 
         {/* Overview Cards */}
         <Text style={styles.sectionTitle}>Overview</Text>
-      <View style={styles.cardRow}>
-  <InfoCard
-    number={widgets.total_product % 1 === 0 ? `${widgets.total_product}` : `${widgets.total_product}`}
-    label="Total Products"
-    icon="cube-outline"
-    color="#1E5B50"
-  />
-  <InfoCard
-    number={widgets.total_customer % 1 === 0 ? `${widgets.total_customer}` : `${widgets.total_customer}`}
-    label="Total Customers"
-    icon="people-outline"
-    color="#2196F3"
-  />
-</View>
+        <View style={styles.cardRow}>
+          <InfoCard
+            number={
+              widgets.total_product % 1 === 0
+                ? `${widgets.total_product}`
+                : `${widgets.total_product}`
+            }
+            label="Total Products"
+            icon="cube-outline"
+            color="#FF8F3C"
+          />
+          <InfoCard
+            number={
+              widgets.total_customer % 1 === 0
+                ? `${widgets.total_customer}`
+                : `${widgets.total_customer}`
+            }
+            label="Total Customers"
+            icon="people-outline"
+            color="#2196F3"
+          />
+        </View>
 
-     <View style={styles.cardRow}>
-  <InfoCard
-    number={`${widgets.total_supplier}`}
-    label="Total Suppliers"
-    icon="storefront-outline"
-    color="#FF9800"
-  />
-  <InfoCard
-    number={`${widgets.total_category}`}
-    label="Total Categories"
-    icon="albums-outline"
-    color="#9C27B0"
-  />
-</View>
-
+        <View style={styles.cardRow}>
+          <InfoCard
+            number={`${widgets.total_supplier}`}
+            label="Total Suppliers"
+            icon="storefront-outline"
+            color="#FF9800"
+          />
+          <InfoCard
+            number={`${widgets.total_category}`}
+            label="Total Categories"
+            icon="albums-outline"
+            color="#9C27B0"
+          />
+        </View>
 
         {/* Sales Section */}
         <Text style={styles.sectionTitle}>Sales</Text>
         <View style={styles.cardRow}>
-        <InfoCard
-  number={formatCurrency(widgets.total_sale)}
-  label={`Total Sales (${widgets.total_sale_count})`}
-  icon="cash-outline"
-  color="#1E5B50"
-/>
-        <InfoCard
-  number={formatCurrency(widgets.total_sale_return)}
-  label={`Sales Return (${widgets.total_sale_return_count})`}
-  icon="arrow-undo-outline"
-  color="#FF5722"
-/>
+          <InfoCard
+            number={formatCurrency(widgets.total_sale)}
+            label={`Total Sales (${widgets.total_sale_count})`}
+            icon="cash-outline"
+            color="#FF8F3C"
+          />
+          <InfoCard
+            number={formatCurrency(widgets.total_sale_return)}
+            label={`Sales Return (${widgets.total_sale_return_count})`}
+            icon="arrow-undo-outline"
+            color="#FF5722"
+          />
         </View>
 
         {/* Purchases Section */}
         <Text style={styles.sectionTitle}>Purchases</Text>
         <View style={styles.cardRow}>
-        <InfoCard
-  number={formatCurrency(widgets.total_purchase)}
-  label={`Total Purchases (${widgets.total_purchase_count})`}
-  icon="cart-outline"
-  color="#2196F3"
-/>
+          <InfoCard
+            number={formatCurrency(widgets.total_purchase)}
+            label={`Total Purchases (${widgets.total_purchase_count})`}
+            icon="cart-outline"
+            color="#2196F3"
+          />
         </View>
         <View style={styles.cardRow}>
-         <InfoCard
-  number={formatCurrency(widgets.total_purchase_return)}
-  label={`Purchase Return (${widgets.total_purchase_return_count})`}
-  icon="refresh-outline"
-  color="#FF9800"
-/>
+          <InfoCard
+            number={formatCurrency(widgets.total_purchase_return)}
+            label={`Purchase Return (${widgets.total_purchase_return_count})`}
+            icon="refresh-outline"
+            color="#FF9800"
+          />
         </View>
 
         {/* Inventory Alerts Table */}
@@ -355,7 +362,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#1E5B50",
+    backgroundColor: "#FF8F3C",
     shadowColor: "#000",
     shadowOpacity: 0.15,
     shadowOffset: { width: 0, height: 5 },

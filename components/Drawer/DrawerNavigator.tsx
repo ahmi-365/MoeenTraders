@@ -1,3 +1,8 @@
+import HomeScreen from "@/screens/HomeScreen";
+import PurchaseEntryReportScreen from "@/screens/SubScreens/PurchaseEntryReportScreen";
+import PurchaseReturnEntryReportScreen from "@/screens/SubScreens/PurchaseReturn";
+import SalesEntryReportScreen from "@/screens/SubScreens/Sales";
+import SalesReturnEntryReportScreen from "@/screens/SubScreens/SalesReturn";
 import { Ionicons } from "@expo/vector-icons";
 import {
   createDrawerNavigator,
@@ -15,14 +20,17 @@ import {
   UIManager,
   View,
 } from "react-native";
-import MonthYearFilter from "./MonthYearFilter";
-import HomeScreen from "@/screens/HomeScreen";
-import ContactUsScreen from "../../screens/ContactUsScreen";
 import { useUserStore } from "../../stores/userStore";
-import PurchaseEntryReportScreen from "@/screens/SubScreens/PurchaseEntryReportScreen";
-import PurchaseReturnEntryReportScreen from "@/screens/SubScreens/PurchaseReturn";
-import SalesEntryReportScreen from "@/screens/SubScreens/Sales";
-import SalesReturnEntryReportScreen from "@/screens/SubScreens/SalesReturn";
+import MonthYearFilter from "./MonthYearFilter";
+import { Image } from "react-native-elements";
+import Products from "@/screens/SubScreens/Products";
+import Customers from "@/screens/SubScreens/Customers";
+import CustomersPayments from "@/screens/SubScreens/CustomersPayments";
+import Suppliers from "@/screens/SubScreens/Suppliers";
+import SuppliersPayments from "@/screens/SubScreens/SuppliersPayments";
+import Adjustments from "@/screens/SubScreens/Adjustments";
+import Transfers from "@/screens/SubScreens/Transfers";
+import Expenses from "@/screens/SubScreens/Expenses";
 
 const Drawer = createDrawerNavigator();
 
@@ -42,9 +50,8 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const animatedHeight = useRef(new Animated.Value(0)).current;
   const animatedOpacity = useRef(new Animated.Value(0)).current;
 
-  // Calculate the height needed for all submenu items
-  const SUBMENU_ITEM_HEIGHT = 50; // Approximate height per item
-  const SUBMENU_ITEMS_COUNT = 12; // Total number of submenu items
+  const SUBMENU_ITEM_HEIGHT = 50; 
+  const SUBMENU_ITEMS_COUNT = 12; 
   const TOTAL_SUBMENU_HEIGHT = SUBMENU_ITEMS_COUNT * SUBMENU_ITEM_HEIGHT;
 
   const toggleReport = () => {
@@ -53,8 +60,8 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
     Animated.parallel([
       Animated.timing(animatedHeight, {
-        toValue: targetValue === 1 ? TOTAL_SUBMENU_HEIGHT : 0, // ✅ Use calculated height
-        duration: 400, // Slightly longer duration for smoother animation
+        toValue: targetValue === 1 ? TOTAL_SUBMENU_HEIGHT : 0, 
+        duration: 400,
         easing: Easing.out(Easing.ease),
         useNativeDriver: false,
       }),
@@ -77,17 +84,33 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
   const subMenuItems = [
     { name: "Purchases", icon: "bag-outline", screen: "PurchaseEntryReport" },
-    { name: "Purchase Return", icon: "return-up-back-outline", screen: "PurchaseReturn" },
+    {
+      name: "Purchase Return",
+      icon: "return-up-back-outline",
+      screen: "PurchaseReturn",
+    },
     { name: "Sales", icon: "trending-up-outline", screen: "Sales" },
-    { name: "Sales Return", icon: "return-down-back-outline", screen: "SalesReturn" },
-    { name: "Products", icon: "cube-outline", screen: "ContactUs" },
-    { name: "Customers", icon: "people-outline", screen: "ContactUs" },
-    { name: "Customer Payments", icon: "card-outline", screen: "ContactUs" },
-    { name: "Suppliers", icon: "business-outline", screen: "ContactUs" },
-    { name: "Supplier Payments", icon: "cash-outline", screen: "ContactUs" },
-    { name: "Adjustments", icon: "settings-outline", screen: "ContactUs" },
-    { name: "Transfers", icon: "swap-horizontal-outline", screen: "ContactUs" },
-    { name: "Expenses", icon: "receipt-outline", screen: "ContactUs" },
+    {
+      name: "Sales Return",
+      icon: "return-down-back-outline",
+      screen: "SalesReturn",
+    },
+    { name: "Products", icon: "cube-outline", screen: "Products" },
+    { name: "Customers", icon: "people-outline", screen: "Customers" },
+    {
+      name: "Customer Payments",
+      icon: "card-outline",
+      screen: "CustomersPayments",
+    },
+    { name: "Suppliers", icon: "business-outline", screen: "Suppliers" },
+    {
+      name: "Supplier Payments",
+      icon: "cash-outline",
+      screen: "SuppliersPayments",
+    },
+    { name: "Adjustments", icon: "settings-outline", screen: "Adjustments" },
+    { name: "Transfers", icon: "swap-horizontal-outline", screen: "Transfers" },
+    { name: "Expenses", icon: "receipt-outline", screen: "Expenses" },
   ];
 
   return (
@@ -99,13 +122,17 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       <View style={styles.drawerContent}>
         <View style={styles.header}>
           <View style={styles.avatar}>
-            <Ionicons name="person-outline" size={28} color="#1E5B50" />
+            <Ionicons name="person-outline" size={28} color="#FF8F3C" />
           </View>
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
               {user?.name || (status === "guest" ? "Guest User" : "Superadmin")}
             </Text>
-            <Text style={styles.userEmail} numberOfLines={1} ellipsizeMode="tail">
+            <Text
+              style={styles.userEmail}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {user?.email || "admin@example.com"}
             </Text>
           </View>
@@ -137,8 +164,8 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           <Animated.View
             style={[
               styles.subMenu,
-              { 
-                height: animatedHeight, 
+              {
+                height: animatedHeight,
                 opacity: animatedOpacity,
               },
             ]}
@@ -149,7 +176,11 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
                 style={styles.subMenuItem}
                 onPress={() => props.navigation.navigate(item.screen)}
               >
-<Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={20} color="#555" />
+                <Ionicons
+                  name={item.icon as keyof typeof Ionicons.glyphMap}
+                  size={20}
+                  color="#555"
+                />
                 <Text style={styles.subMenuText}>{item.name}</Text>
               </TouchableOpacity>
             ))}
@@ -159,7 +190,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={20} color="#1E5B50" />
+          <Ionicons name="log-out-outline" size={20} color="#FF8F3C" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -174,40 +205,67 @@ const DrawerNavigator = () => {
       screenOptions={({ navigation, route }) => ({
         headerStyle: {
           backgroundColor: "#f8f9fa",
-          height: 90,
+          height: 100,
           shadowColor: "transparent",
           elevation: 0,
         },
-        
-        headerTitleStyle: {
-          fontSize: 20,
-          fontWeight: "600",
-          color: "#1E5B50",
-        },
-        headerTintColor: "#1E5B50",
+        headerTintColor: "#FF8F3C",
         drawerStyle: {
           backgroundColor: "#f8f9fa",
           width: 280,
         },
+        headerTitle: "",
+        headerBackground: () => (
+          <Image
+            source={require("../../assets/images/header.png")}
+            style={{
+              width: "80%",
+              height: "100%",
+              resizeMode: "contain",
+              opacity: 0.9,
+              marginTop: 14,
+              marginRight: 30,
+              alignSelf: "flex-end", // ✅ Right align
+            }}
+          />
+        ),
+
         headerLeft: () => (
           <TouchableOpacity onPress={() => navigation.toggleDrawer()}>
             <Ionicons
               name="menu"
               size={30}
-              color="#1E5B50"
+              color="#183284"
               style={{ marginLeft: 15 }}
             />
           </TouchableOpacity>
         ),
-        // ✅ Conditionally show MonthYearFilter only on Dashboard
-        headerRight: () => route.name === "Dashboard" ? <MonthYearFilter /> : null,
+        headerRight: () =>
+          route.name === "Dashboard" ? <MonthYearFilter /> : null,
       })}
     >
       <Drawer.Screen name="Dashboard" component={HomeScreen} />
-      <Drawer.Screen name="PurchaseEntryReport" component={PurchaseEntryReportScreen} />
-      <Drawer.Screen name="PurchaseReturn" component={PurchaseReturnEntryReportScreen} />
+      <Drawer.Screen name="Adjustments" component={Adjustments} />
+      <Drawer.Screen name="Transfers" component={Transfers} />
+      <Drawer.Screen name="Expenses" component={Expenses} />
+      <Drawer.Screen name="Suppliers" component={Suppliers} />
+      <Drawer.Screen name="SuppliersPayments" component={SuppliersPayments} />
+      <Drawer.Screen name="Customers" component={Customers} />
+      <Drawer.Screen name="CustomersPayments" component={CustomersPayments} />
+      <Drawer.Screen
+        name="PurchaseEntryReport"
+        component={PurchaseEntryReportScreen}
+      />
+      <Drawer.Screen
+        name="PurchaseReturn"
+        component={PurchaseReturnEntryReportScreen}
+      />
       <Drawer.Screen name="Sales" component={SalesEntryReportScreen} />
-      <Drawer.Screen name="SalesReturn" component={SalesReturnEntryReportScreen} />
+      <Drawer.Screen name="Products" component={Products} />
+      <Drawer.Screen
+        name="SalesReturn"
+        component={SalesReturnEntryReportScreen}
+      />
     </Drawer.Navigator>
   );
 };
@@ -225,10 +283,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingTop: 15,
   },
-  
+
   // Header Styles
   header: {
-    backgroundColor: "#1E5B50",
+    backgroundColor: "#FF8F3C",
     paddingVertical: 12, // Reduced from 20
     paddingHorizontal: 15, // Reduced from 20
     flexDirection: "row", // Changed to row layout
@@ -252,40 +310,40 @@ const styles = StyleSheet.create({
     flex: 1, // Take remaining space
     justifyContent: "center",
   },
-  userName: { 
-    color: "white", 
+  userName: {
+    color: "white",
     fontSize: 16, // Reduced from 18
     fontWeight: "700",
     marginBottom: 2, // Reduced from 4
   },
-  userEmail: { 
-    color: "#fff", 
+  userEmail: {
+    color: "#fff",
     fontSize: 12, // Reduced from 14
     opacity: 0.9,
     flexShrink: 1, // Allow text to shrink if needed
   },
-  
+
   // ✅ Updated Menu Item Styles with Reduced Spacing
-  menuItem: { 
-    flexDirection: "row", 
-    alignItems: "center", 
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 8, // ✅ Reduced from 15 to 8
     paddingHorizontal: 10,
     marginVertical: 1, // ✅ Reduced from 2 to 1
   },
-  menuText: { 
-    fontSize: 16, 
-    marginLeft: 15, 
-    color: "#333", 
+  menuText: {
+    fontSize: 16,
+    marginLeft: 15,
+    color: "#333",
     fontWeight: "600",
     flex: 1, // Allow text to take available space
   },
   chevron: {
-    marginLeft: "auto"
+    marginLeft: "auto",
   },
-  
+
   // ✅ Updated Submenu Styles
-  subMenu: { 
+  subMenu: {
     overflow: "hidden", // Keep this for smooth animation
     backgroundColor: "#f9f9f9",
     marginLeft: 10,
@@ -294,37 +352,37 @@ const styles = StyleSheet.create({
     marginTop: 2, // ✅ Reduced from 5 to 2
   },
   subMenuItem: {
-    flexDirection: "row", 
-    alignItems: "center", 
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 12,
     paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
     minHeight: 48, // Ensure consistent height
   },
-  subMenuText: { 
-    fontSize: 15, 
-    marginLeft: 12, 
+  subMenuText: {
+    fontSize: 15,
+    marginLeft: 12,
     color: "#555",
     fontWeight: "500",
   },
-  
+
   // Footer Styles
-  footer: { 
-    padding: 20, 
-    borderTopWidth: 1, 
+  footer: {
+    padding: 20,
+    borderTopWidth: 1,
     borderTopColor: "#eee",
     backgroundColor: "#f8f9fa",
   },
-  logoutBtn: { 
-    flexDirection: "row", 
+  logoutBtn: {
+    flexDirection: "row",
     alignItems: "center",
     paddingVertical: 10,
   },
   logoutText: {
     fontSize: 16,
     marginLeft: 10,
-    color: "#1E5B50",
+    color: "#FF8F3C",
     fontWeight: "700",
   },
 
@@ -341,7 +399,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255, 184, 0, 0.3)",
   },
   filterText: {
-    color: "#1E5B50",
+    color: "#FF8F3C",
     fontWeight: "600",
     marginLeft: 8,
     fontSize: 14,
@@ -366,18 +424,18 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  modalTitle: { 
-    fontSize: 18, 
-    fontWeight: "700", 
-    color: "#333" 
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
   },
-  row: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    justifyContent: "center" 
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   smallBtn: {
-    backgroundColor: "#1E5B50",
+    backgroundColor: "#FF8F3C",
     borderRadius: 8,
     padding: 8,
     marginHorizontal: 15,
@@ -390,7 +448,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   applyBtn: {
-    backgroundColor: "#1E5B50",
+    backgroundColor: "#FF8F3C",
     paddingVertical: 14,
     borderRadius: 12,
     width: "100%",
@@ -416,7 +474,7 @@ const styles = StyleSheet.create({
   centerMonthText: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#1E5B50",
+    color: "#FF8F3C",
   },
   centerYearText: {
     fontSize: 16,
@@ -441,7 +499,7 @@ const styles = StyleSheet.create({
     color: "#555",
   },
   selectedMonthButton: {
-    backgroundColor: "#1E5B50",
+    backgroundColor: "#FF8F3C",
     borderColor: "rgba(255,255,255,0.5)",
     borderWidth: 2,
     elevation: 5,

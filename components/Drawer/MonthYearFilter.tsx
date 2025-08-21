@@ -34,10 +34,18 @@ const MonthYearFilter = () => {
     ],
     []
   );
-  const resetFilter = () => {
-    setTempMonth(month);
-    setTempYear(year);
-  };
+const resetFilter = () => {
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1; // months are 0-based
+  const currentYear = today.getFullYear();
+
+  setTempMonth(currentMonth);
+  setTempYear(currentYear);
+
+  setMonth(currentMonth);
+  setYear(currentYear);
+};
+
 
   const openModal = () => {
     setTempMonth(month);
@@ -119,7 +127,7 @@ const MonthYearFilter = () => {
     <>
       {/* Header Button */}
       <TouchableOpacity style={styles.filterButton} onPress={openModal}>
-        <Ionicons name="filter-outline" size={20} color="#1E5B50" />
+        <Ionicons name="filter-outline" size={20} color="#FF8F3C" />
         <Text style={styles.filterText}>
           {months[month - 1]} {year}
         </Text>
@@ -204,12 +212,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: "rgba(231, 254, 233, 0.1)",
+    backgroundColor: "#dfe0e4ff",
     borderWidth: 1,
-    borderColor: "rgba(0, 116, 15, 0.3)",
+    borderColor: "#183284",
   },
   filterText: {
-    color: "#1E5B50",
+    color: "#FF8F3C",
     fontWeight: "600",
     marginLeft: 8,
     fontSize: 14,
@@ -235,7 +243,7 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 18, fontWeight: "700", color: "#333" },
   row: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
   smallBtn: {
-    backgroundColor: "#1E5B50",
+    backgroundColor: "#183284",
     borderRadius: 8,
     padding: 8,
     marginHorizontal: 15,
@@ -248,7 +256,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   applyBtn: {
-    backgroundColor: "#1E5B50",
+    backgroundColor: "#183284",
     paddingVertical: 14,
     borderRadius: 12,
     width: "100%",
@@ -284,9 +292,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#f4f4f4",
     borderRadius: 100,
     borderWidth: 6,
-    borderColor: "rgba(0, 116, 15, 0.3)",
+    borderColor: "#f8c29aff",
   },
-  centerMonthText: { fontSize: 28, fontWeight: "bold", color: "#1E5B50" },
+  centerMonthText: { fontSize: 28, fontWeight: "bold", color: "#183284" },
   centerYearText: { fontSize: 16, color: "#888" },
   monthButton: {
     position: "absolute",
@@ -303,7 +311,7 @@ const styles = StyleSheet.create({
   },
   monthText: { fontSize: 14, fontWeight: "600", color: "#555" },
   selectedMonthButton: {
-    backgroundColor: "#1E5B50",
+    backgroundColor: "#183284",
     borderColor: "rgba(255,255,255,0.5)",
     borderWidth: 2,
     elevation: 5,

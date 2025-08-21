@@ -1,16 +1,16 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
   ActivityIndicator,
-  TouchableOpacity,
   Modal,
-  ScrollView,
   RefreshControl,
   SafeAreaView,
-} from 'react-native';
-import axios from 'axios';
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import ReusableTable, { Column } from "../../components/Table/ReusableTable";
 
 // --- 1. Type Definition ---
@@ -41,10 +41,16 @@ interface SaleReturnEntry {
 // --- 2. Helper Components ---
 
 // Helper for displaying a row of details in the modal
-const DetailRow = ({ label, value }: { label: string; value?: string | number }) => (
+const DetailRow = ({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string | number;
+}) => (
   <View style={styles.modalDetailRow}>
     <Text style={styles.modalDetailLabel}>{label}</Text>
-    <Text style={styles.modalDetailValue}>{value || 'N/A'}</Text>
+    <Text style={styles.modalDetailValue}>{value || "N/A"}</Text>
   </View>
 );
 
@@ -61,19 +67,36 @@ const DetailsModal = ({
   if (!entry) return null;
 
   return (
-    <Modal transparent={true} visible={visible} animationType="fade" onRequestClose={onClose}>
+    <Modal
+      transparent={true}
+      visible={visible}
+      animationType="fade"
+      onRequestClose={onClose}
+    >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           <ScrollView showsVerticalScrollIndicator={false}>
-            <Text style={styles.modalTitle}>Return Details (Ref S.Inv: {entry.invoiceNo})</Text>
+            <Text style={styles.modalTitle}>
+              Return Details (Ref S.Inv: {entry.invoiceNo})
+            </Text>
 
             <Text style={styles.modalSectionTitle}>Return Information</Text>
             <DetailRow label="Return Date:" value={entry.returnDate} />
-            {entry.customerId && <DetailRow label="Customer ID:" value={entry.customerId} />}
-            {entry.originalSaleId && <DetailRow label="Original Sale ID:" value={entry.originalSaleId} />}
+            {entry.customerId && (
+              <DetailRow label="Customer ID:" value={entry.customerId} />
+            )}
+            {entry.originalSaleId && (
+              <DetailRow
+                label="Original Sale ID:"
+                value={entry.originalSaleId}
+              />
+            )}
             <DetailRow label="Total Return Price:" value={entry.totalPrice} />
             <DetailRow label="Discount:" value={entry.discountAmount} />
-            <DetailRow label="Net Payable (to Cust):" value={entry.payableAmount} />
+            <DetailRow
+              label="Net Payable (to Cust):"
+              value={entry.payableAmount}
+            />
             <DetailRow label="Amount Paid Back:" value={entry.paidAmount} />
             <DetailRow label="Due Amount (Return):" value={entry.dueAmount} />
 
@@ -87,12 +110,21 @@ const DetailsModal = ({
             <View style={styles.modalSeparator} />
 
             <Text style={styles.modalSectionTitle}>Original Sale Info</Text>
-            <DetailRow label="Orig. Sale Date:" value={entry.originalSaleDate} />
+            <DetailRow
+              label="Orig. Sale Date:"
+              value={entry.originalSaleDate}
+            />
             <DetailRow label="Vehicle Number:" value={entry.vehicleNumber} />
             <DetailRow label="Driver Name:" value={entry.driverName} />
             <DetailRow label="Driver Contact:" value={entry.driverContact} />
-            <DetailRow label="Orig. Sale Fare:" value={entry.originalSaleFare} />
-            <DetailRow label="Orig. Pymt Method:" value={entry.originalSalePaymentMethod} />
+            <DetailRow
+              label="Orig. Sale Fare:"
+              value={entry.originalSaleFare}
+            />
+            <DetailRow
+              label="Orig. Pymt Method:"
+              value={entry.originalSalePaymentMethod}
+            />
 
             <View style={styles.modalSeparator} />
 
@@ -128,42 +160,47 @@ export default function SalesReturnEntryReportScreen() {
 
   // Modal State
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<SaleReturnEntry | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<SaleReturnEntry | null>(
+    null
+  );
 
   // Formatting helper functions
-  const formatApiDate = (date: Date) => date.toISOString().split('T')[0];
-  
+  const formatApiDate = (date: Date) => date.toISOString().split("T")[0];
+
   const formatDisplayDateTime = (dateString?: string) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     try {
-      return new Date(dateString).toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+      return new Date(dateString).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
         hour12: true,
       });
     } catch {
       return dateString;
     }
   };
-  
+
   const formatDisplayDate = (dateString?: string) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     try {
       // Add a time to avoid timezone issues with YYYY-MM-DD format
-      return new Date(`${dateString}T00:00:00`).toLocaleDateString('en-CA'); // YYYY-MM-DD
+      return new Date(`${dateString}T00:00:00`).toLocaleDateString("en-CA"); // YYYY-MM-DD
     } catch {
       return dateString;
     }
   };
-  
-  const formatCurrency = (value: any, defaultValue: string = '0.00') => {
+
+  const formatCurrency = (value: any, defaultValue: string = "0.00") => {
     if (value == null) return defaultValue;
     const num = Number(value);
     if (isNaN(num)) return value.toString();
-    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return num.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   };
 
   // Transform API data to SaleReturnEntry format
@@ -173,9 +210,9 @@ export default function SalesReturnEntryReportScreen() {
       const originalSaleData = actionableData.sale || {};
 
       return {
-        invoiceNo: originalSaleData.invoice_no?.toString() ?? 'N/A',
-        type: item.action_name ?? 'N/A',
-        by: item.admin?.username ?? 'N/A',
+        invoiceNo: originalSaleData.invoice_no?.toString() ?? "N/A",
+        type: item.action_name ?? "N/A",
+        by: item.admin?.username ?? "N/A",
         time: formatDisplayDateTime(item.created_at),
         returnDate: formatDisplayDate(actionableData.return_date),
         totalPrice: formatCurrency(actionableData.total_price),
@@ -183,14 +220,15 @@ export default function SalesReturnEntryReportScreen() {
         payableAmount: formatCurrency(actionableData.payable_amount),
         paidAmount: formatCurrency(actionableData.paid_amount),
         dueAmount: formatCurrency(actionableData.due_amount),
-        note: actionableData.note?.toString() ?? '',
+        note: actionableData.note?.toString() ?? "",
         customerId: actionableData.customer_id,
         originalSaleDate: formatDisplayDate(originalSaleData.sale_date),
-        originalSalePaymentMethod: originalSaleData.payment_method?.toString() ?? 'N/A',
-        vehicleNumber: originalSaleData.vehicle_number?.toString() ?? 'N/A',
-        driverName: originalSaleData.driver_name?.toString() ?? 'N/A',
-        driverContact: originalSaleData.driver_contact?.toString() ?? 'N/A',
-        originalSaleFare: formatCurrency(originalSaleData.fare, '0'),
+        originalSalePaymentMethod:
+          originalSaleData.payment_method?.toString() ?? "N/A",
+        vehicleNumber: originalSaleData.vehicle_number?.toString() ?? "N/A",
+        driverName: originalSaleData.driver_name?.toString() ?? "N/A",
+        driverContact: originalSaleData.driver_contact?.toString() ?? "N/A",
+        originalSaleFare: formatCurrency(originalSaleData.fare, "0"),
         actionableCreatedAt: formatDisplayDateTime(actionableData.created_at),
         actionableUpdatedAt: formatDisplayDateTime(actionableData.updated_at),
         originalSaleId: actionableData.sale_id,
@@ -202,14 +240,14 @@ export default function SalesReturnEntryReportScreen() {
     try {
       // Prevent multiple simultaneous requests
       if (isFetchingMore && !isInitialLoad) {
-        console.log('Already fetching, skipping request');
+        console.log("Already fetching, skipping request");
         return;
       }
 
       if (isInitialLoad) {
         setIsLoading(true);
         setError(null);
-        console.log('Initial load - resetting state');
+        console.log("Initial load - resetting state");
       } else {
         setIsFetchingMore(true);
         console.log(`Loading more entries for page ${page}`);
@@ -221,53 +259,61 @@ export default function SalesReturnEntryReportScreen() {
         apiUrl += `&end_date=${formatApiDate(endDate)}`;
       }
 
-      console.log('Fetching Sale Return Entries:', { apiUrl, page, isInitialLoad });
+      console.log("Fetching Sale Return Entries:", {
+        apiUrl,
+        page,
+        isInitialLoad,
+      });
 
       const response = await axios.get(apiUrl, {
-        headers: { Accept: 'application/json' },
+        headers: { Accept: "application/json" },
         timeout: 10000, // 10 second timeout
       });
 
-      console.log('API Response:', {
+      console.log("API Response:", {
         currentPage: response.data?.current_page,
         totalPages: response.data?.total_pages,
         dataLength: response.data?.data?.length,
-        isInitialLoad
+        isInitialLoad,
       });
 
-      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.data)
+      ) {
         const fetchedData = transformApiData(response.data.data);
-        
+
         if (isInitialLoad) {
-          console.log('Setting initial entries:', fetchedData.length);
+          console.log("Setting initial entries:", fetchedData.length);
           setEntries(fetchedData);
           setCurrentPage(response.data.current_page || 1);
         } else {
-          console.log('Appending entries:', fetchedData.length);
-          setEntries(prevEntries => {
+          console.log("Appending entries:", fetchedData.length);
+          setEntries((prevEntries) => {
             const newEntries = [...prevEntries, ...fetchedData];
-            console.log('Total entries after append:', newEntries.length);
+            console.log("Total entries after append:", newEntries.length);
             return newEntries;
           });
           setCurrentPage(response.data.current_page || page);
         }
-        
+
         setTotalPages(response.data.total_pages || 1);
       } else {
-        console.error('Invalid response structure:', response.data);
-        throw new Error('Invalid response format');
+        console.error("Invalid response structure:", response.data);
+        throw new Error("Invalid response format");
       }
     } catch (err) {
-      console.error('Failed to fetch data:', err);
-      const errorMessage = axios.isAxiosError(err) 
-        ? `Network error: ${err.message}` 
-        : 'Failed to load data. Please try again.';
-      
+      console.error("Failed to fetch data:", err);
+      const errorMessage = axios.isAxiosError(err)
+        ? `Network error: ${err.message}`
+        : "Failed to load data. Please try again.";
+
       if (isInitialLoad) {
         setError(errorMessage);
       } else {
         // For load more errors, show a toast or alert instead of clearing all data
-        console.error('Load more failed:', errorMessage);
+        console.error("Load more failed:", errorMessage);
       }
     } finally {
       setIsLoading(false);
@@ -277,33 +323,33 @@ export default function SalesReturnEntryReportScreen() {
 
   // Initial load and date filter changes
   useEffect(() => {
-    console.log('Date filter changed, fetching initial data');
+    console.log("Date filter changed, fetching initial data");
     fetchEntries(1, true);
   }, [startDate, endDate]);
 
   const handleRefresh = () => {
-    console.log('Manual refresh triggered');
+    console.log("Manual refresh triggered");
     fetchEntries(1, true);
   };
 
   const handleLoadMore = () => {
     const nextPage = currentPage + 1;
-    console.log('Load more requested:', { 
-      currentPage, 
-      nextPage, 
-      totalPages, 
-      isFetchingMore, 
+    console.log("Load more requested:", {
+      currentPage,
+      nextPage,
+      totalPages,
+      isFetchingMore,
       isLoading,
-      currentEntriesCount: entries.length 
+      currentEntriesCount: entries.length,
     });
-    
+
     if (nextPage <= totalPages && !isFetchingMore && !isLoading) {
       fetchEntries(nextPage, false);
     } else {
-      console.log('Load more conditions not met:', {
+      console.log("Load more conditions not met:", {
         canLoadMore: nextPage <= totalPages,
         notFetching: !isFetchingMore,
-        notLoading: !isLoading
+        notLoading: !isLoading,
       });
     }
   };
@@ -314,7 +360,7 @@ export default function SalesReturnEntryReportScreen() {
   };
 
   const handleDateRangeChange = (start: Date | null, end: Date | null) => {
-    console.log('Date range changed:', { start, end });
+    console.log("Date range changed:", { start, end });
     setStartDate(start);
     setEndDate(end);
   };
@@ -322,29 +368,31 @@ export default function SalesReturnEntryReportScreen() {
   // Define table columns
   const columns: Column<SaleReturnEntry>[] = [
     {
-      key: 'invoiceNo',
-      title: 'Invoice No.',
+      key: "invoiceNo",
+      title: "Invoice No.",
       flex: 1.2,
       render: (item) => (
         <Text style={styles.invoiceText}>{item.invoiceNo}</Text>
       ),
     },
     {
-      key: 'type',
-      title: 'Type',
+      key: "type",
+      title: "Type",
       flex: 1,
     },
     {
-      key: 'by',
-      title: 'By',
+      key: "by",
+      title: "By",
       flex: 1,
     },
     {
-      key: 'time',
-      title: 'Time',
+      key: "time",
+      title: "Time",
       flex: 1.5,
       render: (item) => (
-        <Text style={styles.timeText} numberOfLines={2}>{item.time}</Text>
+        <Text style={styles.timeText} numberOfLines={2}>
+          {item.time}
+        </Text>
       ),
     },
   ];
@@ -356,7 +404,7 @@ export default function SalesReturnEntryReportScreen() {
           <Text style={styles.appBarTitle}>Sale Return Entry Report</Text>
         </View>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#1E5B50" />
+          <ActivityIndicator size="large" color="#FF8F3C" />
           <Text style={styles.loadingText}>Loading sale return entries...</Text>
         </View>
       </SafeAreaView>
@@ -390,10 +438,10 @@ export default function SalesReturnEntryReportScreen() {
       <ScrollView
         style={styles.scrollContainer}
         refreshControl={
-          <RefreshControl 
-            refreshing={isLoading && entries.length > 0} 
-            onRefresh={handleRefresh} 
-            colors={["#1E5B50"]}
+          <RefreshControl
+            refreshing={isLoading && entries.length > 0}
+            onRefresh={handleRefresh}
+            colors={["#FF8F3C"]}
           />
         }
       >
@@ -408,12 +456,13 @@ export default function SalesReturnEntryReportScreen() {
               startDate,
               endDate,
               onDateRangeChange: handleDateRangeChange,
-              placeholder: "Filter by date range"
+              placeholder: "Filter by date range",
             }}
             emptyStateConfig={{
-              emptyTitle: 'No Sale Return Entries Found',
-              emptyMessage: 'There are no sale return entry records to display for the selected criteria.',
-              emptyIcon: '🔄'
+              emptyTitle: "No Sale Return Entries Found",
+              emptyMessage:
+                "There are no sale return entry records to display for the selected criteria.",
+              emptyIcon: "🔄",
             }}
             containerStyle={styles.tableContainer}
           />
@@ -421,8 +470,8 @@ export default function SalesReturnEntryReportScreen() {
           {/* Load More Button */}
           {canLoadMore && !isFetchingMore && entries.length > 0 && (
             <View style={styles.loadMoreButtonContainer}>
-              <TouchableOpacity 
-                style={styles.loadMoreButton} 
+              <TouchableOpacity
+                style={styles.loadMoreButton}
                 onPress={handleLoadMore}
                 activeOpacity={0.7}
               >
@@ -436,7 +485,7 @@ export default function SalesReturnEntryReportScreen() {
           {/* Loading Indicator */}
           {isFetchingMore && (
             <View style={styles.loadMoreContainer}>
-              <ActivityIndicator size="small" color="#1E5B50" />
+              <ActivityIndicator size="small" color="#FF8F3C" />
               <Text style={styles.loadMoreText}>Loading more entries...</Text>
             </View>
           )}
@@ -454,14 +503,15 @@ export default function SalesReturnEntryReportScreen() {
           {entries.length > 0 && (
             <View style={styles.paginationInfo}>
               <Text style={styles.paginationText}>
-                Page {currentPage} of {totalPages} • {entries.length} entries loaded
+                Page {currentPage} of {totalPages} • {entries.length} entries
+                loaded
                 {canLoadMore && ' • Tap "Load More" to continue'}
               </Text>
             </View>
           )}
         </View>
       </ScrollView>
-      
+
       <DetailsModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -475,21 +525,21 @@ export default function SalesReturnEntryReportScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f7fa',
+    backgroundColor: "#f5f7fa",
   },
   appBar: {
-    backgroundColor: '#1E5B50',
+    backgroundColor: "#FF8F3C",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     elevation: 4,
   },
   appBarTitle: {
-    color: 'white',
+    color: "white",
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   scrollContainer: {
     flex: 1,
@@ -502,42 +552,42 @@ const styles = StyleSheet.create({
   },
   center: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   errorText: {
-    color: '#D32F2F',
+    color: "#D32F2F",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#1E5B50',
+    backgroundColor: "#FF8F3C",
     paddingVertical: 10,
     paddingHorizontal: 30,
     borderRadius: 8,
   },
   retryButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   // Custom cell styles
   invoiceText: {
-    color: '#0D47A1',
-    fontWeight: '600',
+    color: "#0D47A1",
+    fontWeight: "600",
     fontSize: 13,
   },
   timeText: {
     fontSize: 12,
-    color: '#333',
+    color: "#333",
     lineHeight: 14,
   },
 
@@ -545,43 +595,43 @@ const styles = StyleSheet.create({
   loadMoreButtonContainer: {
     paddingVertical: 16,
     paddingHorizontal: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   loadMoreButton: {
-    backgroundColor: '#1E5B50',
+    backgroundColor: "#FF8F3C",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
     minWidth: 200,
   },
   loadMoreButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "600",
+    textAlign: "center",
   },
 
   // Load more styles
   loadMoreContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 16,
     gap: 8,
   },
   loadMoreText: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
 
   // Pagination info styles
   paginationInfo: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -589,36 +639,36 @@ const styles = StyleSheet.create({
   },
   paginationText: {
     fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     lineHeight: 16,
   },
 
   // End of list styles
   endOfListContainer: {
     paddingVertical: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   endOfListText: {
     fontSize: 14,
-    color: '#999',
-    fontStyle: 'italic',
+    color: "#999",
+    fontStyle: "italic",
   },
 
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
   },
   modalContainer: {
-    width: '90%',
-    maxHeight: '85%',
-    backgroundColor: 'white',
+    width: "90%",
+    maxHeight: "85%",
+    backgroundColor: "white",
     borderRadius: 15,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -626,53 +676,53 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
-    textAlign: 'center',
-    color: '#333',
+    textAlign: "center",
+    color: "#333",
   },
   modalSectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1E5B50',
+    fontWeight: "bold",
+    color: "#FF8F3C",
     marginTop: 10,
     marginBottom: 5,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
     paddingBottom: 5,
   },
   modalDetailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingVertical: 6,
   },
   modalDetailLabel: {
     fontSize: 15,
-    color: '#555',
-    fontWeight: '500',
+    color: "#555",
+    fontWeight: "500",
     flex: 1.2,
   },
   modalDetailValue: {
     fontSize: 15,
-    color: '#111',
+    color: "#111",
     flex: 1,
-    textAlign: 'right',
+    textAlign: "right",
   },
   modalSeparator: {
     height: 1,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
     marginVertical: 10,
   },
   closeButton: {
-    backgroundColor: '#1E5B50',
+    backgroundColor: "#FF8F3C",
     borderRadius: 8,
     padding: 12,
     marginTop: 20,
   },
   closeButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
     fontSize: 16,
   },
 });

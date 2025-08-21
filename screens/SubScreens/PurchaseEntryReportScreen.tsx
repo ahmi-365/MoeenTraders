@@ -1,20 +1,26 @@
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
   ActivityIndicator,
   Modal,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
+  View,
 } from "react-native";
 import ReusableTable, { Column } from "../../components/Table/ReusableTable";
 import { PurchaseEntry } from "../../types/types";
-import axios from "axios";
 
 // Helper component for displaying a row of details in the modal
-const DetailRow = ({ label, value }: { label: string; value: string | number }) => (
+const DetailRow = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) => (
   <View style={styles.modalDetailRow}>
     <Text style={styles.modalDetailLabel}>{label}</Text>
     <Text style={styles.modalDetailValue}>{value}</Text>
@@ -44,7 +50,10 @@ const PurchaseDetailModal = ({
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
-          <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.modalScrollView}
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={styles.modalTitle}>Details: {entry.invoiceNo}</Text>
 
             <DetailRow label="Purchase Date:" value={entry.purchaseDate} />
@@ -57,17 +66,29 @@ const PurchaseDetailModal = ({
             <View style={styles.modalSeparator} />
 
             <DetailRow label="Payment Method:" value={entry.paymentMethod} />
-            {entry.paymentMethod.toLowerCase() === 'bank' ? (
-              <DetailRow label="Received (Bank):" value={entry.receivedAmountBank} />
-            ) : entry.paymentMethod.toLowerCase() === 'cash' ? (
-              <DetailRow label="Received (Cash):" value={entry.receivedAmountCash} />
+            {entry.paymentMethod.toLowerCase() === "bank" ? (
+              <DetailRow
+                label="Received (Bank):"
+                value={entry.receivedAmountBank}
+              />
+            ) : entry.paymentMethod.toLowerCase() === "cash" ? (
+              <DetailRow
+                label="Received (Cash):"
+                value={entry.receivedAmountCash}
+              />
             ) : (
               <>
-                <DetailRow label="Received (Bank):" value={entry.receivedAmountBank} />
-                <DetailRow label="Received (Cash):" value={entry.receivedAmountCash} />
+                <DetailRow
+                  label="Received (Bank):"
+                  value={entry.receivedAmountBank}
+                />
+                <DetailRow
+                  label="Received (Cash):"
+                  value={entry.receivedAmountCash}
+                />
               </>
             )}
-            
+
             <View style={styles.modalSeparator} />
 
             <DetailRow label="Vehicle Number:" value={entry.vehicleNumber} />
@@ -104,7 +125,9 @@ export default function PurchaseEntryReportScreen() {
 
   // Modal state
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedEntry, setSelectedEntry] = useState<PurchaseEntry | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<PurchaseEntry | null>(
+    null
+  );
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -116,21 +139,24 @@ export default function PurchaseEntryReportScreen() {
   }, [startDate, endDate]);
 
   const formatDateForAPI = (date: Date) => {
-    return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+    return date.toISOString().split("T")[0]; // YYYY-MM-DD format
   };
 
   const buildApiUrl = (page: number) => {
     let apiUrl = `https://dewan-chemicals.majesticsofts.com/api/reports/data-entry/purchase?page=${page}`;
-    
+
     if (startDate && endDate) {
       apiUrl += `&start_date=${formatDateForAPI(startDate)}`;
       apiUrl += `&end_date=${formatDateForAPI(endDate)}`;
     }
-    
+
     return apiUrl;
   };
 
-  const fetchPurchaseEntries = async (page: number = 1, isInitialLoad: boolean = false) => {
+  const fetchPurchaseEntries = async (
+    page: number = 1,
+    isInitialLoad: boolean = false
+  ) => {
     if (isFetchingMore && !isInitialLoad) return;
 
     try {
@@ -141,34 +167,34 @@ export default function PurchaseEntryReportScreen() {
       } else {
         setIsFetchingMore(true);
       }
-      
+
       setError(null);
-      
+
       const apiUrl = buildApiUrl(page);
-      console.log('Fetching Purchases:', apiUrl);
-      
-      const response = await axios.get(apiUrl, { 
-        headers: { 
+      console.log("Fetching Purchases:", apiUrl);
+
+      const response = await axios.get(apiUrl, {
+        headers: {
           Accept: "application/json",
           // Add your bearer token here if needed
           // Authorization: "Bearer YOUR_TOKEN_HERE"
-        } 
+        },
       });
 
       if (response.data && response.data.data) {
         const data: PurchaseEntry[] = response.data.data.map((item: any) => {
           // Format time
-          let formattedTime = 'N/A';
+          let formattedTime = "N/A";
           if (item.created_at) {
             try {
               const date = new Date(item.created_at);
-              formattedTime = date.toLocaleString('en-US', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
+              formattedTime = date.toLocaleString("en-US", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
               });
             } catch (e) {
               formattedTime = item.created_at;
@@ -176,23 +202,23 @@ export default function PurchaseEntryReportScreen() {
           }
 
           // Format purchase date
-          let formattedPurchaseDate = 'N/A';
+          let formattedPurchaseDate = "N/A";
           if (item.actionable?.purchase_date) {
             try {
               const date = new Date(item.actionable.purchase_date);
-              formattedPurchaseDate = date.toLocaleDateString('en-US');
+              formattedPurchaseDate = date.toLocaleDateString("en-US");
             } catch (e) {
               formattedPurchaseDate = item.actionable.purchase_date;
             }
           }
 
           // Extract user info
-          const extractedBy = item.admin?.username || 'N/A';
+          const extractedBy = item.admin?.username || "N/A";
           const actionableData = item.actionable || {};
 
           return {
-            invoiceNo: actionableData.invoice_no?.toString() || 'N/A',
-            type: item.action_name || 'N/A',
+            invoiceNo: actionableData.invoice_no?.toString() || "N/A",
+            type: item.action_name || "N/A",
             by: extractedBy,
             time: formattedTime,
             purchaseDate: formattedPurchaseDate,
@@ -201,28 +227,34 @@ export default function PurchaseEntryReportScreen() {
             payableAmount: formatCurrency(actionableData.payable_amount),
             paidAmount: formatCurrency(actionableData.paid_amount),
             dueAmount: formatCurrency(actionableData.due_amount),
-            paymentMethod: actionableData.payment_method?.toString() || 'N/A',
-            receivedAmountBank: formatCurrency(actionableData.received_amount_bank, '0'),
-            receivedAmountCash: formatCurrency(actionableData.received_amount_cash, '0'),
-            vehicleNumber: actionableData.vehicle_number?.toString() || 'N/A',
-            driverName: actionableData.driver_name?.toString() || 'N/A',
-            driverContact: actionableData.driver_contact?.toString() || 'N/A',
-            fare: formatCurrency(actionableData.fare, '0'),
-            note: actionableData.note?.toString() || '',
+            paymentMethod: actionableData.payment_method?.toString() || "N/A",
+            receivedAmountBank: formatCurrency(
+              actionableData.received_amount_bank,
+              "0"
+            ),
+            receivedAmountCash: formatCurrency(
+              actionableData.received_amount_cash,
+              "0"
+            ),
+            vehicleNumber: actionableData.vehicle_number?.toString() || "N/A",
+            driverName: actionableData.driver_name?.toString() || "N/A",
+            driverContact: actionableData.driver_contact?.toString() || "N/A",
+            fare: formatCurrency(actionableData.fare, "0"),
+            note: actionableData.note?.toString() || "",
           };
         });
 
         if (isInitialLoad) {
           setPurchaseEntries(data);
         } else {
-          setPurchaseEntries(prev => [...prev, ...data]);
+          setPurchaseEntries((prev) => [...prev, ...data]);
         }
 
         setCurrentPage(response.data.current_page || page);
         setTotalPages(response.data.total_pages || 1);
       }
     } catch (err) {
-      console.error('Error fetching purchase entries:', err);
+      console.error("Error fetching purchase entries:", err);
       setError("Failed to fetch purchase entries.");
     } finally {
       setLoading(false);
@@ -236,14 +268,14 @@ export default function PurchaseEntryReportScreen() {
     fetchPurchaseEntries(1, true);
   };
 
-  const formatCurrency = (value: any, defaultValue: string = '0.00') => {
+  const formatCurrency = (value: any, defaultValue: string = "0.00") => {
     if (value === null || value === undefined) return defaultValue;
     try {
       const num = Number(value);
       if (isNaN(num)) return defaultValue;
-      return num.toLocaleString('en-US', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
+      return num.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       });
     } catch {
       return value?.toString() || defaultValue;
@@ -273,11 +305,11 @@ export default function PurchaseEntryReportScreen() {
     setSelectedEntry(item);
     setModalVisible(true);
   };
-  
+
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1E5B50" />
+        <ActivityIndicator size="large" color="#FF8F3C" />
         <Text style={styles.loadingText}>Loading purchase entries...</Text>
       </View>
     );
@@ -286,9 +318,9 @@ export default function PurchaseEntryReportScreen() {
   if (error) {
     return (
       <View style={styles.center}>
-       <View style={styles.appBar}>
-               <Text style={styles.appBarTitle}>Sales Entry Report</Text>
-             </View>
+        <View style={styles.appBar}>
+          <Text style={styles.appBarTitle}>Purchase Entry Report</Text>
+        </View>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity onPress={onRefresh} style={styles.retryButton}>
           <Text style={styles.retryText}>Retry</Text>
@@ -301,11 +333,15 @@ export default function PurchaseEntryReportScreen() {
     <View style={styles.container}>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 16 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
-       <View style={styles.appBar}>
-               <Text style={styles.appBarTitle}>Sales Entry Report</Text>
-             </View>
+        <View style={styles.appBar}>
+          <Text style={styles.appBarTitle}>Purchase Entry Report</Text>
+        </View>
+              <View style={styles.tableWrapper}>
+
         <ReusableTable<PurchaseEntry>
           data={purchaseEntries}
           columns={columns}
@@ -319,47 +355,72 @@ export default function PurchaseEntryReportScreen() {
             placeholder: "Select Date Range for Purchase Entries",
             quickSelectOptions: [
               { label: "Today", start: new Date(), end: new Date() },
-              { label: "Yesterday", start: (() => {
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                return yesterday;
-              })(), end: (() => {
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                return yesterday;
-              })() },
-              { label: "Last 7 days", start: (() => {
-                const lastWeek = new Date();
-                lastWeek.setDate(lastWeek.getDate() - 7);
-                return lastWeek;
-              })(), end: new Date() },
-              { label: "Last 30 days", start: (() => {
-                const lastMonth = new Date();
-                lastMonth.setDate(lastMonth.getDate() - 30);
-                return lastMonth;
-              })(), end: new Date() },
-              { label: "This month", start: new Date(new Date().getFullYear(), new Date().getMonth(), 1), end: new Date() },
-              { label: "This year", start: new Date(new Date().getFullYear(), 0, 1), end: new Date() },
-            ]
+              {
+                label: "Yesterday",
+                start: (() => {
+                  const yesterday = new Date();
+                  yesterday.setDate(yesterday.getDate() - 1);
+                  return yesterday;
+                })(),
+                end: (() => {
+                  const yesterday = new Date();
+                  yesterday.setDate(yesterday.getDate() - 1);
+                  return yesterday;
+                })(),
+              },
+              {
+                label: "Last 7 days",
+                start: (() => {
+                  const lastWeek = new Date();
+                  lastWeek.setDate(lastWeek.getDate() - 7);
+                  return lastWeek;
+                })(),
+                end: new Date(),
+              },
+              {
+                label: "Last 30 days",
+                start: (() => {
+                  const lastMonth = new Date();
+                  lastMonth.setDate(lastMonth.getDate() - 30);
+                  return lastMonth;
+                })(),
+                end: new Date(),
+              },
+              {
+                label: "This month",
+                start: new Date(
+                  new Date().getFullYear(),
+                  new Date().getMonth(),
+                  1
+                ),
+                end: new Date(),
+              },
+              {
+                label: "This year",
+                start: new Date(new Date().getFullYear(), 0, 1),
+                end: new Date(),
+              },
+            ],
           }}
           emptyStateConfig={{
             emptyTitle: "No Purchase Entries",
-            emptyMessage: startDate && endDate 
-              ? `No purchase data available for ${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
-              : "No purchase data available for this period.",
+            emptyMessage:
+              startDate && endDate
+                ? `No purchase data available for ${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
+                : "No purchase data available for this period.",
             emptyIcon: "🛒",
           }}
         />
-
+</View>
         {/* Load More Button */}
         {currentPage < totalPages && (
-          <TouchableOpacity 
-            style={styles.loadMoreButton} 
+          <TouchableOpacity
+            style={styles.loadMoreButton}
             onPress={handleLoadMore}
             disabled={isFetchingMore}
           >
             {isFetchingMore ? (
-              <ActivityIndicator size="small" color="#1E5B50" />
+              <ActivityIndicator size="small" color="#FF8F3C" />
             ) : (
               <Text style={styles.loadMoreText}>Load More</Text>
             )}
@@ -378,23 +439,28 @@ export default function PurchaseEntryReportScreen() {
 }
 const styles = StyleSheet.create({
   appBar: {
-    backgroundColor: '#1E5B50',
+    backgroundColor: "#FF8F3C",
+      width: "100%",   
+              
     paddingHorizontal: 20,
     paddingVertical: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     elevation: 4,
   },
   appBarTitle: {
-    color: 'white',
+    color: "white",
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  container: {
+container: {
     flex: 1,
-    paddingHorizontal: 12,
-    backgroundColor: "#f5f7fa",
+    backgroundColor: "#f5f7fa", // 🔹 Pure page ka background
+  },
+  tableWrapper: {
+    flex: 1,
+    paddingHorizontal: 12, // 🔹 Sirf table ke liye margin
   },
   sectionTitle: {
     fontSize: 18,
@@ -430,144 +496,144 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "600",
   },
-  
+
   // Date Filter Styles
   filterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 12,
     paddingHorizontal: 4,
     gap: 10,
   },
   dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1E5B50',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FF8F3C",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   dateButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   dateIcon: {
     fontSize: 16,
   },
   clearButton: {
-    backgroundColor: '#ff6b6b',
+    backgroundColor: "#ff6b6b",
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 6,
   },
   clearButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   // Load More Button
   loadMoreButton: {
-    backgroundColor: '#1E5B50',
+    backgroundColor: "#FF8F3C",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 16,
     marginHorizontal: 4,
   },
   loadMoreText: {
-    color: 'white',
+    color: "white",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   // Date Picker Styles
   datePickerOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   datePickerContainer: {
-    width: '90%',
-    backgroundColor: 'white',
+    width: "90%",
+    backgroundColor: "white",
     borderRadius: 15,
     padding: 20,
-    maxHeight: '70%',
+    maxHeight: "70%",
   },
   datePickerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 20,
-    color: '#333',
+    color: "#333",
   },
   quickSelectContainer: {
     marginBottom: 20,
   },
   quickSelectLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 10,
-    color: '#333',
+    color: "#333",
   },
   quickSelectButton: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: "#e9ecef",
   },
   quickSelectButtonText: {
     fontSize: 14,
-    color: '#495057',
+    color: "#495057",
   },
   selectedDatesContainer: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: "#e3f2fd",
     padding: 12,
     borderRadius: 8,
     marginBottom: 20,
   },
   selectedDatesText: {
     fontSize: 14,
-    color: '#1976d2',
-    textAlign: 'center',
-    fontWeight: '500',
+    color: "#1976d2",
+    textAlign: "center",
+    fontWeight: "500",
   },
   datePickerButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: 10,
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: '#6c757d',
+    backgroundColor: "#6c757d",
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   confirmButton: {
     flex: 1,
-    backgroundColor: '#1E5B50',
+    backgroundColor: "#FF8F3C",
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   confirmButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   // Modal Styles
@@ -590,14 +656,14 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalScrollView: {
-    maxHeight: '85%',
+    maxHeight: "85%",
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: "center",
-    color: '#333'
+    color: "#333",
   },
   modalDetailRow: {
     flexDirection: "row",
@@ -607,23 +673,23 @@ const styles = StyleSheet.create({
   modalDetailLabel: {
     fontSize: 15,
     color: "#555",
-    fontWeight: '500',
+    fontWeight: "500",
     flex: 1,
   },
   modalDetailValue: {
     fontSize: 15,
     color: "#111",
-    fontWeight: 'bold',
+    fontWeight: "bold",
     flex: 1,
-    textAlign: 'right',
+    textAlign: "right",
   },
   modalSeparator: {
     height: 1,
-    backgroundColor: '#eee',
+    backgroundColor: "#eee",
     marginVertical: 10,
   },
   closeButton: {
-    backgroundColor: "#1E5B50",
+    backgroundColor: "#FF8F3C",
     borderRadius: 8,
     padding: 12,
     elevation: 2,
