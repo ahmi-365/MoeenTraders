@@ -20,6 +20,9 @@ import HomeScreen from "@/screens/HomeScreen";
 import ContactUsScreen from "../../screens/ContactUsScreen";
 import { useUserStore } from "../../stores/userStore";
 import PurchaseEntryReportScreen from "@/screens/SubScreens/PurchaseEntryReportScreen";
+import PurchaseReturnEntryReportScreen from "@/screens/SubScreens/PurchaseReturn";
+import SalesEntryReportScreen from "@/screens/SubScreens/Sales";
+import SalesReturnEntryReportScreen from "@/screens/SubScreens/SalesReturn";
 
 const Drawer = createDrawerNavigator();
 
@@ -74,9 +77,9 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
   const subMenuItems = [
     { name: "Purchases", icon: "bag-outline", screen: "PurchaseEntryReport" },
-    { name: "Purchase Return", icon: "return-up-back-outline", screen: "ContactUs" },
-    { name: "Sales", icon: "trending-up-outline", screen: "ContactUs" },
-    { name: "Sales Return", icon: "return-down-back-outline", screen: "ContactUs" },
+    { name: "Purchase Return", icon: "return-up-back-outline", screen: "PurchaseReturn" },
+    { name: "Sales", icon: "trending-up-outline", screen: "Sales" },
+    { name: "Sales Return", icon: "return-down-back-outline", screen: "SalesReturn" },
     { name: "Products", icon: "cube-outline", screen: "ContactUs" },
     { name: "Customers", icon: "people-outline", screen: "ContactUs" },
     { name: "Customer Payments", icon: "card-outline", screen: "ContactUs" },
@@ -202,7 +205,9 @@ const DrawerNavigator = () => {
     >
       <Drawer.Screen name="Dashboard" component={HomeScreen} />
       <Drawer.Screen name="PurchaseEntryReport" component={PurchaseEntryReportScreen} />
-      <Drawer.Screen name="ContactUs" component={ContactUsScreen} />
+      <Drawer.Screen name="PurchaseReturn" component={PurchaseReturnEntryReportScreen} />
+      <Drawer.Screen name="Sales" component={SalesEntryReportScreen} />
+      <Drawer.Screen name="SalesReturn" component={SalesReturnEntryReportScreen} />
     </Drawer.Navigator>
   );
 };

@@ -9,7 +9,7 @@ export default function App() {
   const navigationRef = useNavigationContainerRef();
   const [currentRouteName, setCurrentRouteName] = useState<string | undefined>();
   const [isAppReady, setIsAppReady] = useState(false);
-
+//FF8F3C
   useEffect(() => {
     const init = async () => {
       try {

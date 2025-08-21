@@ -286,6 +286,9 @@ export default function PurchaseEntryReportScreen() {
   if (error) {
     return (
       <View style={styles.center}>
+       <View style={styles.appBar}>
+               <Text style={styles.appBarTitle}>Sales Entry Report</Text>
+             </View>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity onPress={onRefresh} style={styles.retryButton}>
           <Text style={styles.retryText}>Retry</Text>
@@ -300,8 +303,10 @@ export default function PurchaseEntryReportScreen() {
         contentContainerStyle={{ paddingBottom: 16 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
+       <View style={styles.appBar}>
+               <Text style={styles.appBarTitle}>Sales Entry Report</Text>
+             </View>
         <ReusableTable<PurchaseEntry>
-          title="Purchase Entry Report"
           data={purchaseEntries}
           columns={columns}
           showIndex
@@ -372,6 +377,20 @@ export default function PurchaseEntryReportScreen() {
   );
 }
 const styles = StyleSheet.create({
+  appBar: {
+    backgroundColor: '#1E5B50',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    elevation: 4,
+  },
+  appBarTitle: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
   container: {
     flex: 1,
     paddingHorizontal: 12,

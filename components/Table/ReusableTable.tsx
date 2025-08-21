@@ -41,6 +41,7 @@ type ReusableTableProps<T> = {
   tableStyle?: object;
   showIndex?: boolean;
   dateFilter?: DateFilterConfig;
+  maxHeight?: number; // Add this prop to control height
 };
 
 // Date Filter Component
@@ -221,6 +222,7 @@ function ReusableTable<T>({
   tableStyle,
   showIndex = false,
   dateFilter,
+  maxHeight, // New prop to control table height
 }: ReusableTableProps<T>) {
   const {
     emptyTitle = 'No Data Available',
@@ -259,6 +261,7 @@ function ReusableTable<T>({
     dateFilter?.onDateRangeChange?.(null, null);
   };
 
+
   return (
     <View style={[styles.container, containerStyle]}>
       {title && <Text style={styles.sectionTitle}>{title}</Text>}
@@ -278,6 +281,13 @@ function ReusableTable<T>({
         <EmptyState />
       ) : (
         <View style={[styles.tableContainer, tableStyle]}>
+          {/* Debug info in table header */}
+          <View style={styles.debugInfoContainer}>
+            <Text style={styles.debugInfoText}>
+              Table: Showing {data.length} entries
+            </Text>
+          </View>
+
           {/* Horizontal scroll for table content */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
             <View style={styles.tableContent}>
@@ -304,42 +314,50 @@ function ReusableTable<T>({
                 ))}
               </View>
 
-              {/* Data Rows */}
-              <ScrollView style={{ maxHeight: 600 }} showsVerticalScrollIndicator={false}>
-                {data.map((item, rowIndex) => (
-                  <TouchableOpacity
-                    key={rowIndex}
-                    style={styles.dataRow}
-                    onPress={() => onRowPress?.(item, rowIndex)}
-                    activeOpacity={onRowPress ? 0.7 : 1}
-                  >
-                    {showIndex && (
-                      <View style={[styles.dataCell, styles.indexColumn]}>
-                        <Text style={styles.indexText}>{rowIndex + 1}</Text>
-                      </View>
-                    )}
-                    {columns.map((column, colIndex) => (
-                      <View
-                        key={colIndex}
-                        style={[
-                          styles.dataCell, 
-                          { minWidth: 100, flex: column.flex || 1 }, 
-                          column.cellStyle
-                        ]}
+              {/* Data Rows - FIXED: Removed limiting ScrollView */}
+              <View style={maxHeight ? { maxHeight } : {}}>
+                <ScrollView 
+                  showsVerticalScrollIndicator={true}
+                  style={maxHeight ? { maxHeight } : { maxHeight: 800 }} // Increased default height
+                  nestedScrollEnabled={true}
+                >
+                  {data.map((item, rowIndex) => {
+                    return (
+                      <TouchableOpacity
+                        key={`row-${rowIndex}`} // Better key
+                        style={styles.dataRow}
+                        onPress={() => onRowPress?.(item, rowIndex)}
+                        activeOpacity={onRowPress ? 0.7 : 1}
                       >
-                        {renderCell(item, column, rowIndex)}
-                      </View>
-                    ))}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+                        {showIndex && (
+                          <View style={[styles.dataCell, styles.indexColumn]}>
+                            <Text style={styles.indexText}>{rowIndex + 1}</Text>
+                          </View>
+                        )}
+                        {columns.map((column, colIndex) => (
+                          <View
+                            key={`cell-${rowIndex}-${colIndex}`}
+                            style={[
+                              styles.dataCell, 
+                              { minWidth: 100, flex: column.flex || 1 }, 
+                              column.cellStyle
+                            ]}
+                          >
+                            {renderCell(item, column, rowIndex)}
+                          </View>
+                        ))}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
             </View>
           </ScrollView>
 
           {/* Hint text */}
           <View style={styles.hintContainer}>
             <Text style={styles.hintText}>
-              💡 Tap any row to view complete details
+              💡 Tap any row to view complete details • Scroll to see more entries
             </Text>
           </View>
         </View>
@@ -379,6 +397,22 @@ const styles = StyleSheet.create({
     elevation: 3,
     overflow: 'hidden',
   },
+
+  // Debug info container
+  debugInfoContainer: {
+    backgroundColor: '#e3f2fd',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#bbdefb',
+  },
+  debugInfoText: {
+    fontSize: 12,
+    color: '#1976d2',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+
   horizontalScroll: {
     flex: 1,
   },
