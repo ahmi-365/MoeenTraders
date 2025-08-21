@@ -66,7 +66,7 @@ const UniversalSpeedDial = () => {
 
 const styles = StyleSheet.create({
   fab: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#1E5B50",
   },
   fabContainer: {
     position: "absolute",
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     right: 1,
   },
   actionButton: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#1E5B50",
   },
   actionWrapperWithMargin: {
     marginBottom: -10,

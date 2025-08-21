@@ -6,10 +6,10 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { useMonthYear } from "../../context/MonthYearContext";
-import { TouchableWithoutFeedback } from "react-native";
 
 const MonthYearFilter = () => {
   const { month, year, setMonth, setYear } = useMonthYear(); // 👈 use context
@@ -119,7 +119,7 @@ const MonthYearFilter = () => {
     <>
       {/* Header Button */}
       <TouchableOpacity style={styles.filterButton} onPress={openModal}>
-        <Ionicons name="filter-outline" size={20} color="#4CAF50" />
+        <Ionicons name="filter-outline" size={20} color="#1E5B50" />
         <Text style={styles.filterText}>
           {months[month - 1]} {year}
         </Text>
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0, 116, 15, 0.3)",
   },
   filterText: {
-    color: "#4CAF50",
+    color: "#1E5B50",
     fontWeight: "600",
     marginLeft: 8,
     fontSize: 14,
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 18, fontWeight: "700", color: "#333" },
   row: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
   smallBtn: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#1E5B50",
     borderRadius: 8,
     padding: 8,
     marginHorizontal: 15,
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   applyBtn: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#1E5B50",
     paddingVertical: 14,
     borderRadius: 12,
     width: "100%",
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     borderWidth: 6,
     borderColor: "rgba(0, 116, 15, 0.3)",
   },
-  centerMonthText: { fontSize: 28, fontWeight: "bold", color: "#4CAF50" },
+  centerMonthText: { fontSize: 28, fontWeight: "bold", color: "#1E5B50" },
   centerYearText: { fontSize: 16, color: "#888" },
   monthButton: {
     position: "absolute",
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   },
   monthText: { fontSize: 14, fontWeight: "600", color: "#555" },
   selectedMonthButton: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#1E5B50",
     borderColor: "rgba(255,255,255,0.5)",
     borderWidth: 2,
     elevation: 5,

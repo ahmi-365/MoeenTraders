@@ -1,13 +1,14 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
-  View,
-  ScrollView,
-  RefreshControl,
-  ActivityIndicator,
   TouchableOpacity,
+  View,
 } from "react-native";
 import InfoCard from "../components/DashboardCard/InfoCard";
 import ReusableTable from "../components/Table/ReusableTable";
@@ -15,14 +16,15 @@ import { useMonthYear } from "../context/MonthYearContext";
 import {
   DashboardResponse,
   InventoryAlert,
-  TopPerformer,
   TableColumn,
+  TopPerformer,
 } from "../types/dasboard"; // 👈 create a file for types
-import { Ionicons } from "@expo/vector-icons";
 
 export default function HomeScreen() {
   const { month, year } = useMonthYear();
-  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(
+    null
+  );
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,12 +36,10 @@ export default function HomeScreen() {
       setLoading(true);
       setError(null);
 
-      console.log("Fetching dashboard for:", month, year);
       const response = await fetch(apiUrl);
       const data: DashboardResponse = await response.json();
 
       setDashboardData(data);
-      console.log("Dashboard data:", data);
     } catch (err) {
       setError("Failed to load dashboard data");
     } finally {
@@ -47,10 +47,23 @@ export default function HomeScreen() {
       setRefreshing(false);
     }
   };
-const monthName = (monthNumber: number) => {
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return months[monthNumber - 1] || "";
-};
+  const monthName = (monthNumber: number) => {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    return months[monthNumber - 1] || "";
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -127,7 +140,7 @@ const monthName = (monthNumber: number) => {
       style: {
         textAlign: "center",
         fontWeight: "700",
-        color: "#4CAF50",
+        color: "#1E5B50",
       },
     },
     {
@@ -193,148 +206,166 @@ const monthName = (monthNumber: number) => {
         barStyle="dark-content"
       />
 
-    <ScrollView
-  contentContainerStyle={styles.scrollContent}
-  showsVerticalScrollIndicator={false}
-  refreshControl={
-    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-  }
->
-<View style={styles.dateCard}>
-  {/* Month Column */}
-  <View style={styles.dateColumn}>
-    <Text style={styles.dateMonth}>{monthName(month)}</Text>
-  </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <View style={styles.dateCard}>
+          {/* Month Column */}
+          <View style={styles.dateColumn}>
+            <Text style={styles.dateMonth}>{monthName(month)}</Text>
+          </View>
 
-  {/* Year Column */}
-  <View style={styles.dateColumn}>
-    <Text style={styles.dateYear}>{year}</Text>
-  </View>
+          {/* Year Column */}
+          <View style={styles.dateColumn}>
+            <Text style={styles.dateYear}>{year}</Text>
+          </View>
 
-  {/* Calendar Icon */}
-  <Ionicons name="calendar-outline" size={28} color="#fff" style={styles.dateIcon} />
-</View>
+          {/* Calendar Icon */}
+          <Ionicons
+            name="calendar-outline"
+            size={28}
+            color="#fff"
+            style={styles.dateIcon}
+          />
+        </View>
 
+        {/* Overview Cards */}
+        <Text style={styles.sectionTitle}>Overview</Text>
+        <View style={styles.cardRow}>
+          <InfoCard
+            number={widgets.total_product}
+            label="Total Products"
+            icon="cube-outline"
+            color="#1E5B50"
+          />
+          <InfoCard
+            number={widgets.total_customer}
+            label="Total Customers"
+            icon="people-outline"
+            color="#2196F3"
+          />
+        </View>
+        <View style={styles.cardRow}>
+          <InfoCard
+            number={widgets.total_supplier}
+            label="Total Suppliers"
+            icon="storefront-outline"
+            color="#FF9800"
+          />
+          <InfoCard
+            number={widgets.total_category}
+            label="Total Categories"
+            icon="albums-outline"
+            color="#9C27B0"
+          />
+        </View>
 
+        {/* Sales Section */}
+        <Text style={styles.sectionTitle}>Sales</Text>
+        <View style={styles.cardRow}>
+          <InfoCard
+            number={widgets.total_sale}
+            label={`Total Sales (${widgets.total_sale_count})`}
+            icon="cash-outline"
+            color="#1E5B50"
+          />
+          <InfoCard
+            number={widgets.total_sale_return}
+            label={`Sales Return (${widgets.total_sale_return_count})`}
+            icon="arrow-undo-outline"
+            color="#FF5722"
+          />
+        </View>
 
-  {/* Overview Cards */}
-  <Text style={styles.sectionTitle}>Overview</Text>
-  <View style={styles.cardRow}>
-    <InfoCard number={widgets.total_product} label="Total Products" icon="cube-outline" color="#4CAF50" />
-    <InfoCard number={widgets.total_customer} label="Total Customers" icon="people-outline" color="#2196F3" />
-  </View>
-  <View style={styles.cardRow}>
-    <InfoCard number={widgets.total_supplier} label="Total Suppliers" icon="storefront-outline" color="#FF9800" />
-    <InfoCard number={widgets.total_category} label="Total Categories" icon="albums-outline" color="#9C27B0" />
-  </View>
+        {/* Purchases Section */}
+        <Text style={styles.sectionTitle}>Purchases</Text>
+        <View style={styles.cardRow}>
+          <InfoCard
+            number={Number(widgets.total_purchase).toFixed(2)}
+            label={`Total Purchases (${widgets.total_purchase_count})`}
+            icon="cart-outline"
+            color="#2196F3"
+          />
+        </View>
+        <View style={styles.cardRow}>
+          <InfoCard
+            number={Number(widgets.total_purchase_return).toFixed(2)}
+            label={`Purchase Return (${widgets.total_purchase_return_count})`}
+            icon="refresh-outline"
+            color="#FF9800"
+          />
+        </View>
 
-  {/* Sales Section */}
-  <Text style={styles.sectionTitle}>Sales</Text>
-  <View style={styles.cardRow}>
-    <InfoCard 
-      number={widgets.total_sale} 
-      label={`Total Sales (${widgets.total_sale_count})`} 
-      icon="cash-outline" 
-      color="#4CAF50"
-    />
-    <InfoCard 
-      number={widgets.total_sale_return} 
-      label={`Sales Return (${widgets.total_sale_return_count})`} 
-      icon="arrow-undo-outline" 
-      color="#FF5722"
-    />
-  </View>
+        {/* Inventory Alerts Table */}
+        <ReusableTable
+          title="Inventory Alerts"
+          data={dashboardData.alertProductsQty}
+          columns={inventoryAlertsColumns}
+          onRowPress={handleInventoryAlertPress}
+          emptyStateConfig={{
+            emptyTitle: "No Low Stock Alerts",
+            emptyMessage: "All products are well stocked",
+            emptyIcon: "✅",
+          }}
+        />
 
-  {/* Purchases Section */}
-  <Text style={styles.sectionTitle}>Purchases</Text>
-  <View style={styles.cardRow}>
-    <InfoCard 
-      number={Number(widgets.total_purchase).toFixed(2)}   
-      label={`Total Purchases (${widgets.total_purchase_count})`} 
-      icon="cart-outline" 
-      color="#2196F3"
-    />
-    
-  </View>
-  <View style={styles.cardRow}>
-  <InfoCard 
-      number={Number(widgets.total_purchase_return).toFixed(2)} 
-      label={`Purchase Return (${widgets.total_purchase_return_count})`} 
-      icon="refresh-outline" 
-      color="#FF9800"
-    />
-    
-  </View>
-
-  {/* Inventory Alerts Table */}
-  <ReusableTable
-    title="Inventory Alerts"
-    data={dashboardData.alertProductsQty}
-    columns={inventoryAlertsColumns}
-    onRowPress={handleInventoryAlertPress}
-    emptyStateConfig={{
-      emptyTitle: "No Low Stock Alerts",
-      emptyMessage: "All products are well stocked",
-      emptyIcon: "✅",
-    }}
-  />
-
-  {/* Top Performers Table */}
-  <ReusableTable
-    title="Top Performers"
-    data={dashboardData.topSellingProducts}
-    columns={topPerformersColumns}
-    onRowPress={handleTopPerformerPress}
-    showIndex={true}
-    emptyStateConfig={{
-      emptyTitle: "No Sales Data",
-      emptyMessage: "No top selling products for this period",
-      emptyIcon: "📊",
-    }}
-  />
-</ScrollView>
-
+        {/* Top Performers Table */}
+        <ReusableTable
+          title="Top Performers"
+          data={dashboardData.topSellingProducts}
+          columns={topPerformersColumns}
+          onRowPress={handleTopPerformerPress}
+          showIndex={true}
+          emptyStateConfig={{
+            emptyTitle: "No Sales Data",
+            emptyMessage: "No top selling products for this period",
+            emptyIcon: "📊",
+          }}
+        />
+      </ScrollView>
     </View>
   );
 }
 
-
 const styles = StyleSheet.create({
-dateCard: {
-  width: "100%",
-  borderRadius: 16,
-  paddingVertical: 6,
-  paddingHorizontal: 16,
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "space-between",
-  backgroundColor: "#4CAF50",
-  shadowColor: "#000",
-  shadowOpacity: 0.15,
-  shadowOffset: { width: 0, height: 5 },
-  shadowRadius: 10,
-  elevation: 5,
-  marginBottom: 12,
-},
-dateColumn: {
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-},
-dateMonth: {
-  fontSize: 26,
-  fontWeight: "800",
-  color: "#fff",
-},
-dateYear: {
-  fontSize: 16,
-  fontWeight: "500",
-  color: "#e0e0e0",
-},
-dateIcon: {
-  // optional styles
-},
-
+  dateCard: {
+    width: "100%",
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#1E5B50",
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 5 },
+    shadowRadius: 10,
+    elevation: 5,
+    marginBottom: 12,
+  },
+  dateColumn: {
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dateMonth: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#fff",
+  },
+  dateYear: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#e0e0e0",
+  },
+  dateIcon: {
+    // optional styles
+  },
 
   container: {
     flex: 1,
@@ -342,7 +373,7 @@ dateIcon: {
   },
   scrollContent: {
     paddingHorizontal: 12, // reduced from 16
-    paddingBottom: 16,     // reduced from 24
+    paddingBottom: 16, // reduced from 24
   },
   center: {
     flex: 1,
@@ -352,9 +383,9 @@ dateIcon: {
   },
   header: {
     backgroundColor: "#ffffff",
-    borderRadius: 12,      // reduced from 16
-    padding: 16,           // reduced from 20
-    marginVertical: 12,    // reduced from 16
+    borderRadius: 12, // reduced from 16
+    padding: 16, // reduced from 20
+    marginVertical: 12, // reduced from 16
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -362,52 +393,52 @@ dateIcon: {
     elevation: 3,
   },
   headerTitle: {
-    fontSize: 22,          // slightly smaller
+    fontSize: 22, // slightly smaller
     fontWeight: "700",
     color: "#1a1a1a",
-    marginBottom: 2,       // reduced from 4
+    marginBottom: 2, // reduced from 4
   },
   headerSubtitle: {
-    fontSize: 14,          // reduced from 16
+    fontSize: 14, // reduced from 16
     color: "#666",
     fontWeight: "500",
   },
   sectionTitle: {
-    fontSize: 18,          // reduced from 20
+    fontSize: 18, // reduced from 20
     fontWeight: "600",
     color: "#1a1a1a",
-    marginTop: 10,         // slightly reduced
-    marginBottom: 8,       // reduced from 12
+    marginTop: 10, // slightly reduced
+    marginBottom: 8, // reduced from 12
     marginLeft: 4,
   },
   cardRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 8,       // reduced from 12
+    marginBottom: 8, // reduced from 12
   },
   loadingText: {
-    marginTop: 12,         // reduced from 16
-    fontSize: 14,          // smaller
+    marginTop: 12, // reduced from 16
+    fontSize: 14, // smaller
     color: "#666",
   },
   errorText: {
     color: "#F44336",
     fontSize: 14,
     textAlign: "center",
-    marginBottom: 12,      
+    marginBottom: 12,
   },
   retryButton: {
     backgroundColor: "#2196F3",
-    paddingHorizontal: 20, 
-    paddingVertical: 10,   
-    borderRadius: 6,       
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 6,
   },
   retryText: {
     color: "#ffffff",
     fontWeight: "600",
   },
   noDataText: {
-    fontSize: 14,          
+    fontSize: 14,
     color: "#666",
   },
 });

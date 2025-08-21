@@ -18,8 +18,8 @@ import {
 import MonthYearFilter from "./MonthYearFilter";
 import HomeScreen from "@/screens/HomeScreen";
 import ContactUsScreen from "../../screens/ContactUsScreen";
-import HelpCenterScreen from "../../screens/HelpCenterScreen";
 import { useUserStore } from "../../stores/userStore";
+import PurchaseEntryReportScreen from "@/screens/SubScreens/PurchaseEntryReportScreen";
 
 const Drawer = createDrawerNavigator();
 
@@ -73,7 +73,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   };
 
   const subMenuItems = [
-    { name: "Purchases", icon: "bag-outline", screen: "HelpCenter" },
+    { name: "Purchases", icon: "bag-outline", screen: "PurchaseEntryReport" },
     { name: "Purchase Return", icon: "return-up-back-outline", screen: "ContactUs" },
     { name: "Sales", icon: "trending-up-outline", screen: "ContactUs" },
     { name: "Sales Return", icon: "return-down-back-outline", screen: "ContactUs" },
@@ -96,7 +96,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       <View style={styles.drawerContent}>
         <View style={styles.header}>
           <View style={styles.avatar}>
-            <Ionicons name="person-outline" size={28} color="#4CAF50" />
+            <Ionicons name="person-outline" size={28} color="#1E5B50" />
           </View>
           <View style={styles.userInfo}>
             <Text style={styles.userName}>
@@ -156,7 +156,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={20} color="#4CAF50" />
+          <Ionicons name="log-out-outline" size={20} color="#1E5B50" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -168,7 +168,7 @@ const DrawerNavigator = () => {
   return (
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
-      screenOptions={({ navigation }) => ({
+      screenOptions={({ navigation, route }) => ({
         headerStyle: {
           backgroundColor: "#f8f9fa",
           height: 90,
@@ -179,9 +179,9 @@ const DrawerNavigator = () => {
         headerTitleStyle: {
           fontSize: 20,
           fontWeight: "600",
-          color: "#4CAF50",
+          color: "#1E5B50",
         },
-        headerTintColor: "#4CAF50",
+        headerTintColor: "#1E5B50",
         drawerStyle: {
           backgroundColor: "#f8f9fa",
           width: 280,
@@ -191,16 +191,17 @@ const DrawerNavigator = () => {
             <Ionicons
               name="menu"
               size={30}
-              color="#4CAF50"
+              color="#1E5B50"
               style={{ marginLeft: 15 }}
             />
           </TouchableOpacity>
         ),
-        headerRight: () => <MonthYearFilter />,
+        // ✅ Conditionally show MonthYearFilter only on Dashboard
+        headerRight: () => route.name === "Dashboard" ? <MonthYearFilter /> : null,
       })}
     >
       <Drawer.Screen name="Dashboard" component={HomeScreen} />
-      <Drawer.Screen name="HelpCenter" component={HelpCenterScreen} />
+      <Drawer.Screen name="PurchaseEntryReport" component={PurchaseEntryReportScreen} />
       <Drawer.Screen name="ContactUs" component={ContactUsScreen} />
     </Drawer.Navigator>
   );
@@ -222,7 +223,7 @@ const styles = StyleSheet.create({
   
   // Header Styles
   header: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#1E5B50",
     paddingVertical: 12, // Reduced from 20
     paddingHorizontal: 15, // Reduced from 20
     flexDirection: "row", // Changed to row layout
@@ -318,7 +319,7 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 16,
     marginLeft: 10,
-    color: "#4CAF50",
+    color: "#1E5B50",
     fontWeight: "700",
   },
 
@@ -335,7 +336,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255, 184, 0, 0.3)",
   },
   filterText: {
-    color: "#4CAF50",
+    color: "#1E5B50",
     fontWeight: "600",
     marginLeft: 8,
     fontSize: 14,
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
     justifyContent: "center" 
   },
   smallBtn: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#1E5B50",
     borderRadius: 8,
     padding: 8,
     marginHorizontal: 15,
@@ -384,7 +385,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   applyBtn: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#1E5B50",
     paddingVertical: 14,
     borderRadius: 12,
     width: "100%",
@@ -410,7 +411,7 @@ const styles = StyleSheet.create({
   centerMonthText: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#4CAF50",
+    color: "#1E5B50",
   },
   centerYearText: {
     fontSize: 16,
@@ -435,7 +436,7 @@ const styles = StyleSheet.create({
     color: "#555",
   },
   selectedMonthButton: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#1E5B50",
     borderColor: "rgba(255,255,255,0.5)",
     borderWidth: 2,
     elevation: 5,
