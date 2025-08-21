@@ -9,7 +9,7 @@ import {
   DrawerContentComponentProps,
   DrawerContentScrollView,
 } from "@react-navigation/drawer";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import {
   Animated,
   Easing,
@@ -19,6 +19,7 @@ import {
   TouchableOpacity,
   UIManager,
   View,
+  Alert,
 } from "react-native";
 import { useUserStore } from "../../stores/userStore";
 import MonthYearFilter from "./MonthYearFilter";
@@ -46,6 +47,7 @@ if (
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const { user, status, clearUser } = useUserStore();
   const [expandReport, setExpandReport] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false); // Prevent multiple navigations
 
   const animatedHeight = useRef(new Animated.Value(0)).current;
   const animatedOpacity = useRef(new Animated.Value(0)).current;
@@ -54,7 +56,9 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const SUBMENU_ITEMS_COUNT = 12; 
   const TOTAL_SUBMENU_HEIGHT = SUBMENU_ITEMS_COUNT * SUBMENU_ITEM_HEIGHT;
 
-  const toggleReport = () => {
+  const toggleReport = useCallback(() => {
+    if (isNavigating) return; // Prevent action during navigation
+    
     const targetValue = expandReport ? 0 : 1;
     setExpandReport(!expandReport);
 
@@ -72,15 +76,53 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
         useNativeDriver: false,
       }),
     ]).start();
-  };
+  }, [expandReport, animatedHeight, animatedOpacity, isNavigating]);
 
-  const handleLogout = async () => {
-    await clearUser();
-    props.navigation.reset({
-      index: 0,
-      routes: [{ name: "Login" }],
-    });
-  };
+  // Improved navigation handler with error handling
+  const handleNavigation = useCallback((screenName: string) => {
+    if (isNavigating) return; // Prevent multiple rapid taps
+
+    setIsNavigating(true);
+    
+    try {
+      // Check if the screen exists in the navigator
+      const routeNames = props.navigation.getState()?.routeNames || [];
+      
+      if (routeNames.includes(screenName)) {
+        props.navigation.navigate(screenName);
+      } else {
+        // console.warn(`Screen "${screenName}" not found in navigation stack`);
+        Alert.alert('Navigation Error', `Screen "${screenName}" is not available.`);
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
+      Alert.alert('Navigation Error', 'Unable to navigate to the selected screen.');
+    } finally {
+      // Reset navigation flag after a short delay
+      setTimeout(() => {
+        setIsNavigating(false);
+      }, 500);
+    }
+  }, [props.navigation, isNavigating]);
+
+  const handleLogout = useCallback(async () => {
+    if (isNavigating) return;
+    
+    try {
+      setIsNavigating(true);
+      await clearUser();
+      
+      props.navigation.reset({
+        index: 0,
+        routes: [{ name: "Login" }],
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Logout Error', 'Unable to logout. Please try again.');
+    } finally {
+      setIsNavigating(false);
+    }
+  }, [clearUser, props.navigation, isNavigating]);
 
   const subMenuItems = [
     { name: "Purchases", icon: "bag-outline", screen: "PurchaseEntryReport" },
@@ -116,7 +158,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   return (
     <DrawerContentScrollView
       {...props}
-      contentContainerStyle={styles.drawerContainer} // ✅ Updated style
+      contentContainerStyle={styles.drawerContainer}
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.drawerContent}>
@@ -140,14 +182,21 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
 
         <View style={styles.menuContainer}>
           <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => props.navigation.navigate("Dashboard")}
+            style={[styles.menuItem, isNavigating && styles.disabledButton]}
+            onPress={() => handleNavigation("Dashboard")}
+            disabled={isNavigating}
+            activeOpacity={0.7}
           >
             <Ionicons name="speedometer-outline" size={22} color="#333" />
             <Text style={styles.menuText}>Dashboard</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} onPress={toggleReport}>
+          <TouchableOpacity 
+            style={[styles.menuItem, isNavigating && styles.disabledButton]} 
+            onPress={toggleReport}
+            disabled={isNavigating}
+            activeOpacity={0.7}
+          >
             <Ionicons name="document-text-outline" size={22} color="#333" />
             <Text style={styles.menuText}>Data Entry Report</Text>
             <Ionicons
@@ -160,7 +209,7 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             />
           </TouchableOpacity>
 
-          {/* ✅ Improved Animated Submenu */}
+          {/* Improved Animated Submenu */}
           <Animated.View
             style={[
               styles.subMenu,
@@ -172,9 +221,11 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
           >
             {subMenuItems.map((item, index) => (
               <TouchableOpacity
-                key={index}
-                style={styles.subMenuItem}
-                onPress={() => props.navigation.navigate(item.screen)}
+                key={`${item.screen}-${index}`} // Better key prop
+                style={[styles.subMenuItem, isNavigating && styles.disabledButton]}
+                onPress={() => handleNavigation(item.screen)}
+                disabled={isNavigating}
+                activeOpacity={0.7}
               >
                 <Ionicons
                   name={item.icon as keyof typeof Ionicons.glyphMap}
@@ -189,9 +240,16 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+        <TouchableOpacity 
+          style={[styles.logoutBtn, isNavigating && styles.disabledButton]} 
+          onPress={handleLogout}
+          disabled={isNavigating}
+          activeOpacity={0.7}
+        >
           <Ionicons name="log-out-outline" size={20} color="#FF8F3C" />
-          <Text style={styles.logoutText}>Logout</Text>
+          <Text style={styles.logoutText}>
+            {isNavigating ? "Processing..." : "Logout"}
+          </Text>
         </TouchableOpacity>
       </View>
     </DrawerContentScrollView>
@@ -225,13 +283,15 @@ const DrawerNavigator = () => {
               opacity: 0.9,
               marginTop: 14,
               marginRight: 30,
-              alignSelf: "flex-end", // ✅ Right align
+              alignSelf: "flex-end",
             }}
           />
         ),
-
         headerLeft: () => (
-          <TouchableOpacity onPress={() => navigation.toggleDrawer()}>
+          <TouchableOpacity 
+            onPress={() => navigation.toggleDrawer()}
+            activeOpacity={0.7}
+          >
             <Ionicons
               name="menu"
               size={30}
@@ -242,6 +302,8 @@ const DrawerNavigator = () => {
         ),
         headerRight: () =>
           route.name === "Dashboard" ? <MonthYearFilter /> : null,
+        unmountOnBlur: false, 
+        lazy: false, 
       })}
     >
       <Drawer.Screen name="Dashboard" component={HomeScreen} />
@@ -271,9 +333,9 @@ const DrawerNavigator = () => {
 };
 
 const styles = StyleSheet.create({
-  // ✅ Updated Drawer Container Styles
+  // Updated Drawer Container Styles
   drawerContainer: {
-    flexGrow: 1, // Allow content to grow
+    flexGrow: 1,
     paddingBottom: 20,
   },
   drawerContent: {
@@ -287,10 +349,10 @@ const styles = StyleSheet.create({
   // Header Styles
   header: {
     backgroundColor: "#FF8F3C",
-    paddingVertical: 12, // Reduced from 20
-    paddingHorizontal: 15, // Reduced from 20
-    flexDirection: "row", // Changed to row layout
-    alignItems: "center", // Center items vertically
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    flexDirection: "row",
+    alignItems: "center",
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     shadowColor: "#000",
@@ -298,58 +360,65 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowRadius: 5,
     elevation: 5,
-    marginBottom: 8, // Reduced from 10
+    marginBottom: 8,
   },
   avatar: {
     backgroundColor: "white",
-    borderRadius: 30, // Reduced from 40
-    padding: 8, // Reduced from 12
-    marginRight: 12, // Reduced from 15
+    borderRadius: 30,
+    padding: 8,
+    marginRight: 12,
   },
   userInfo: {
-    flex: 1, // Take remaining space
+    flex: 1,
     justifyContent: "center",
   },
   userName: {
     color: "white",
-    fontSize: 16, // Reduced from 18
+    fontSize: 16,
     fontWeight: "700",
-    marginBottom: 2, // Reduced from 4
+    marginBottom: 2,
   },
   userEmail: {
     color: "#fff",
-    fontSize: 12, // Reduced from 14
+    fontSize: 12,
     opacity: 0.9,
-    flexShrink: 1, // Allow text to shrink if needed
+    flexShrink: 1,
   },
 
-  // ✅ Updated Menu Item Styles with Reduced Spacing
+  // Updated Menu Item Styles
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8, // ✅ Reduced from 15 to 8
+    paddingVertical: 8,
     paddingHorizontal: 10,
-    marginVertical: 1, // ✅ Reduced from 2 to 1
+    marginVertical: 1,
+    borderRadius: 8, // Add border radius for better visual feedback
   },
   menuText: {
     fontSize: 16,
     marginLeft: 15,
     color: "#333",
     fontWeight: "600",
-    flex: 1, // Allow text to take available space
+    flex: 1,
   },
   chevron: {
     marginLeft: "auto",
   },
 
-  // ✅ Updated Submenu Styles
+  // Disabled button style
+  disabledButton: {
+    opacity: 0.6,
+    backgroundColor: "#f0f0f0",
+  },
+
+  // Updated Submenu Styles
   subMenu: {
-    overflow: "hidden", // Keep this for smooth animation
+    overflow: "hidden",
     backgroundColor: "#f9f9f9",
     marginLeft: 10,
     marginRight: 10,
     borderRadius: 8,
-    marginTop: 2, // ✅ Reduced from 5 to 2
+    marginTop: 2,
   },
   subMenuItem: {
     flexDirection: "row",
@@ -358,7 +427,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
-    minHeight: 48, // Ensure consistent height
+    minHeight: 48,
+    borderRadius: 4, // Add border radius
   },
   subMenuText: {
     fontSize: 15,
@@ -378,6 +448,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 8, // Add border radius
   },
   logoutText: {
     fontSize: 16,
@@ -386,7 +458,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  // Filter Button Styles (keeping original)
+  // Rest of your existing styles remain the same...
   filterButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -404,8 +476,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 14,
   },
-
-  // Modal Styles (keeping original)
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",
@@ -455,8 +525,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 25,
   },
-
-  // Circular Month Picker Styles (keeping original)
   monthPickerContainer: {
     justifyContent: "center",
     alignItems: "center",
