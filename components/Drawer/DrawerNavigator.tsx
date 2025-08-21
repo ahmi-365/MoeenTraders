@@ -1,29 +1,24 @@
-import React, { useState, useRef, useMemo } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  UIManager,
-  Platform,
-  Animated,
-  Easing,
-  Modal,
-  Dimensions,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
   createDrawerNavigator,
-  DrawerContentScrollView,
   DrawerContentComponentProps,
+  DrawerContentScrollView,
 } from "@react-navigation/drawer";
-import  MonthYearFilter  from "./MonthYearFilter"; // Assuming this is the standalone component
-// Assuming these are your screen components
-import HelpCenterScreen from "../../screens/HelpCenterScreen";
-import ContactUsScreen from "../../screens/ContactUsScreen";
+import React, { useRef, useState } from "react";
+import {
+  Animated,
+  Easing,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  UIManager,
+  View,
+} from "react-native";
+import MonthYearFilter from "./MonthYearFilter";
 import HomeScreen from "@/screens/HomeScreen";
-
-// Assuming you have a user store set up with Zustand
+import ContactUsScreen from "../../screens/ContactUsScreen";
+import HelpCenterScreen from "../../screens/HelpCenterScreen";
 import { useUserStore } from "../../stores/userStore";
 
 const Drawer = createDrawerNavigator();
@@ -36,8 +31,6 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-
-
 // --- Custom Drawer Content Component ---
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const { user, status, clearUser } = useUserStore();
@@ -46,20 +39,25 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const animatedHeight = useRef(new Animated.Value(0)).current;
   const animatedOpacity = useRef(new Animated.Value(0)).current;
 
+  // Calculate the height needed for all submenu items
+  const SUBMENU_ITEM_HEIGHT = 50; // Approximate height per item
+  const SUBMENU_ITEMS_COUNT = 12; // Total number of submenu items
+  const TOTAL_SUBMENU_HEIGHT = SUBMENU_ITEMS_COUNT * SUBMENU_ITEM_HEIGHT;
+
   const toggleReport = () => {
     const targetValue = expandReport ? 0 : 1;
     setExpandReport(!expandReport);
 
     Animated.parallel([
       Animated.timing(animatedHeight, {
-        toValue: targetValue === 1 ? 110 : 0,
-        duration: 300,
+        toValue: targetValue === 1 ? TOTAL_SUBMENU_HEIGHT : 0, // ✅ Use calculated height
+        duration: 400, // Slightly longer duration for smoother animation
         easing: Easing.out(Easing.ease),
         useNativeDriver: false,
       }),
       Animated.timing(animatedOpacity, {
         toValue: targetValue,
-        duration: 250,
+        duration: 300,
         easing: Easing.ease,
         useNativeDriver: false,
       }),
@@ -74,28 +72,46 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
     });
   };
 
+  const subMenuItems = [
+    { name: "Purchases", icon: "bag-outline", screen: "HelpCenter" },
+    { name: "Purchase Return", icon: "return-up-back-outline", screen: "ContactUs" },
+    { name: "Sales", icon: "trending-up-outline", screen: "ContactUs" },
+    { name: "Sales Return", icon: "return-down-back-outline", screen: "ContactUs" },
+    { name: "Products", icon: "cube-outline", screen: "ContactUs" },
+    { name: "Customers", icon: "people-outline", screen: "ContactUs" },
+    { name: "Customer Payments", icon: "card-outline", screen: "ContactUs" },
+    { name: "Suppliers", icon: "business-outline", screen: "ContactUs" },
+    { name: "Supplier Payments", icon: "cash-outline", screen: "ContactUs" },
+    { name: "Adjustments", icon: "settings-outline", screen: "ContactUs" },
+    { name: "Transfers", icon: "swap-horizontal-outline", screen: "ContactUs" },
+    { name: "Expenses", icon: "receipt-outline", screen: "ContactUs" },
+  ];
+
   return (
     <DrawerContentScrollView
       {...props}
-      contentContainerStyle={{ flex: 1, justifyContent: "space-between" }}
+      contentContainerStyle={styles.drawerContainer} // ✅ Updated style
+      showsVerticalScrollIndicator={false}
     >
-      <View>
+      <View style={styles.drawerContent}>
         <View style={styles.header}>
           <View style={styles.avatar}>
-            <Ionicons name="person-outline" size={40} color="#FFB800" />
+            <Ionicons name="person-outline" size={28} color="#4CAF50" />
           </View>
-          <Text style={styles.userName}>
-            {user?.name || (status === "guest" ? "Guest User" : "Unknown User")}
-          </Text>
-          <Text style={styles.userEmail}>
-            {user?.email || "guest@example.com"}
-          </Text>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>
+              {user?.name || (status === "guest" ? "Guest User" : "Superadmin")}
+            </Text>
+            <Text style={styles.userEmail} numberOfLines={1} ellipsizeMode="tail">
+              {user?.email || "admin@example.com"}
+            </Text>
+          </View>
         </View>
 
-        <View style={{ padding: 15 }}>
+        <View style={styles.menuContainer}>
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => props.navigation.navigate("Home")}
+            onPress={() => props.navigation.navigate("Dashboard")}
           >
             <Ionicons name="speedometer-outline" size={22} color="#333" />
             <Text style={styles.menuText}>Dashboard</Text>
@@ -105,36 +121,42 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
             <Ionicons name="document-text-outline" size={22} color="#333" />
             <Text style={styles.menuText}>Data Entry Report</Text>
             <Ionicons
-              name={expandReport ? "chevron-up-outline" : "chevron-down-outline"}
+              name={
+                expandReport ? "chevron-up-outline" : "chevron-down-outline"
+              }
               size={20}
               color="#333"
-              style={{ marginLeft: "auto" }}
+              style={styles.chevron}
             />
           </TouchableOpacity>
+
+          {/* ✅ Improved Animated Submenu */}
           <Animated.View
-            style={[styles.subMenu, { height: animatedHeight, opacity: animatedOpacity }]}
+            style={[
+              styles.subMenu,
+              { 
+                height: animatedHeight, 
+                opacity: animatedOpacity,
+              },
+            ]}
           >
-            <TouchableOpacity
-              style={[styles.menuItem, { marginLeft: 5 }]}
-              onPress={() => props.navigation.navigate("HelpCenter")}
-            >
-              <Ionicons name="help-circle-outline" size={20} color="#333" />
-              <Text style={styles.subMenuText}>Help Center Report</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.menuItem, { marginLeft: 5 }]}
-              onPress={() => props.navigation.navigate("ContactUs")}
-            >
-              <Ionicons name="call-outline" size={20} color="#333" />
-              <Text style={styles.subMenuText}>Contact Report</Text>
-            </TouchableOpacity>
+            {subMenuItems.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.subMenuItem}
+                onPress={() => props.navigation.navigate(item.screen)}
+              >
+<Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={20} color="#555" />
+                <Text style={styles.subMenuText}>{item.name}</Text>
+              </TouchableOpacity>
+            ))}
           </Animated.View>
         </View>
       </View>
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={20} color="#FFB800" />
+          <Ionicons name="log-out-outline" size={20} color="#4CAF50" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -142,11 +164,9 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   );
 };
 
-
-// --- Main Drawer Navigator Component ---
 const DrawerNavigator = () => {
   return (
-     <Drawer.Navigator
+    <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={({ navigation }) => ({
         headerStyle: {
@@ -155,12 +175,13 @@ const DrawerNavigator = () => {
           shadowColor: "transparent",
           elevation: 0,
         },
+        
         headerTitleStyle: {
           fontSize: 20,
           fontWeight: "600",
-          color: "#FFB800",
+          color: "#4CAF50",
         },
-        headerTintColor: "#FFB800",
+        headerTintColor: "#4CAF50",
         drawerStyle: {
           backgroundColor: "#f8f9fa",
           width: 280,
@@ -170,29 +191,42 @@ const DrawerNavigator = () => {
             <Ionicons
               name="menu"
               size={30}
-              color="#FFB800"
+              color="#4CAF50"
               style={{ marginLeft: 15 }}
             />
           </TouchableOpacity>
         ),
-headerRight: () => <MonthYearFilter />,
+        headerRight: () => <MonthYearFilter />,
       })}
     >
-      <Drawer.Screen name="Home" component={HomeScreen} />
+      <Drawer.Screen name="Dashboard" component={HomeScreen} />
       <Drawer.Screen name="HelpCenter" component={HelpCenterScreen} />
       <Drawer.Screen name="ContactUs" component={ContactUsScreen} />
     </Drawer.Navigator>
-
   );
 };
 
-// --- Styles ---
 const styles = StyleSheet.create({
-  // --- Drawer Styles ---
+  // ✅ Updated Drawer Container Styles
+  drawerContainer: {
+    flexGrow: 1, // Allow content to grow
+    paddingBottom: 20,
+  },
+  drawerContent: {
+    flex: 1,
+  },
+  menuContainer: {
+    paddingHorizontal: 15,
+    paddingTop: 15,
+  },
+  
+  // Header Styles
   header: {
-    backgroundColor: "#FFB800",
-    paddingVertical: 30,
-    alignItems: "center",
+    backgroundColor: "#4CAF50",
+    paddingVertical: 12, // Reduced from 20
+    paddingHorizontal: 15, // Reduced from 20
+    flexDirection: "row", // Changed to row layout
+    alignItems: "center", // Center items vertically
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     shadowColor: "#000",
@@ -200,24 +234,95 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowRadius: 5,
     elevation: 5,
+    marginBottom: 8, // Reduced from 10
   },
   avatar: {
     backgroundColor: "white",
-    borderRadius: 50,
-    padding: 15,
-    marginBottom: 10,
+    borderRadius: 30, // Reduced from 40
+    padding: 8, // Reduced from 12
+    marginRight: 12, // Reduced from 15
   },
-  userName: { color: "white", fontSize: 18, fontWeight: "700" },
-  userEmail: { color: "#fff", fontSize: 14, opacity: 0.9 },
-  menuItem: { flexDirection: "row", alignItems: "center", paddingVertical: 12 },
-  menuText: { fontSize: 16, marginLeft: 15, color: "#333", fontWeight: "600" },
-  subMenu: { overflow: "hidden", marginLeft: 15 },
-  subMenuText: { fontSize: 15, marginLeft: 15, color: "#555" },
-  footer: { padding: 20, borderTopWidth: 1, borderTopColor: "#eee" },
-  logoutBtn: { flexDirection: "row", alignItems: "center" },
-  logoutText: { fontSize: 16, marginLeft: 10, color: "#FFB800", fontWeight: "700" },
+  userInfo: {
+    flex: 1, // Take remaining space
+    justifyContent: "center",
+  },
+  userName: { 
+    color: "white", 
+    fontSize: 16, // Reduced from 18
+    fontWeight: "700",
+    marginBottom: 2, // Reduced from 4
+  },
+  userEmail: { 
+    color: "#fff", 
+    fontSize: 12, // Reduced from 14
+    opacity: 0.9,
+    flexShrink: 1, // Allow text to shrink if needed
+  },
   
-  // --- Filter Button Styles ---
+  // ✅ Updated Menu Item Styles with Reduced Spacing
+  menuItem: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    paddingVertical: 8, // ✅ Reduced from 15 to 8
+    paddingHorizontal: 10,
+    marginVertical: 1, // ✅ Reduced from 2 to 1
+  },
+  menuText: { 
+    fontSize: 16, 
+    marginLeft: 15, 
+    color: "#333", 
+    fontWeight: "600",
+    flex: 1, // Allow text to take available space
+  },
+  chevron: {
+    marginLeft: "auto"
+  },
+  
+  // ✅ Updated Submenu Styles
+  subMenu: { 
+    overflow: "hidden", // Keep this for smooth animation
+    backgroundColor: "#f9f9f9",
+    marginLeft: 10,
+    marginRight: 10,
+    borderRadius: 8,
+    marginTop: 2, // ✅ Reduced from 5 to 2
+  },
+  subMenuItem: {
+    flexDirection: "row", 
+    alignItems: "center", 
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    minHeight: 48, // Ensure consistent height
+  },
+  subMenuText: { 
+    fontSize: 15, 
+    marginLeft: 12, 
+    color: "#555",
+    fontWeight: "500",
+  },
+  
+  // Footer Styles
+  footer: { 
+    padding: 20, 
+    borderTopWidth: 1, 
+    borderTopColor: "#eee",
+    backgroundColor: "#f8f9fa",
+  },
+  logoutBtn: { 
+    flexDirection: "row", 
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  logoutText: {
+    fontSize: 16,
+    marginLeft: 10,
+    color: "#4CAF50",
+    fontWeight: "700",
+  },
+
+  // Filter Button Styles (keeping original)
   filterButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -225,13 +330,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 184, 0, 0.1)',
+    backgroundColor: "rgba(255, 184, 0, 0.1)",
     borderWidth: 1,
     borderColor: "rgba(255, 184, 0, 0.3)",
   },
-  filterText: { color: "#FFB800", fontWeight: "600", marginLeft: 8, fontSize: 14 },
-  
-  // --- Modal Styles ---
+  filterText: {
+    color: "#4CAF50",
+    fontWeight: "600",
+    marginLeft: 8,
+    fontSize: 14,
+  },
+
+  // Modal Styles (keeping original)
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",
@@ -250,17 +360,31 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  modalTitle: { fontSize: 18, fontWeight: "700", color: "#333" },
-  row: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
+  modalTitle: { 
+    fontSize: 18, 
+    fontWeight: "700", 
+    color: "#333" 
+  },
+  row: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    justifyContent: "center" 
+  },
   smallBtn: {
-    backgroundColor: "#FFB800",
+    backgroundColor: "#4CAF50",
     borderRadius: 8,
     padding: 8,
     marginHorizontal: 15,
   },
-  value: { fontSize: 22, fontWeight: "bold", minWidth: 70, textAlign: "center", color: "#333" },
+  value: {
+    fontSize: 22,
+    fontWeight: "bold",
+    minWidth: 70,
+    textAlign: "center",
+    color: "#333",
+  },
   applyBtn: {
-    backgroundColor: "#FFB800",
+    backgroundColor: "#4CAF50",
     paddingVertical: 14,
     borderRadius: 12,
     width: "100%",
@@ -268,58 +392,57 @@ const styles = StyleSheet.create({
     marginTop: 25,
   },
 
-  // --- NEW Circular Month Picker Styles ---
+  // Circular Month Picker Styles (keeping original)
   monthPickerContainer: {
     justifyContent: "center",
     alignItems: "center",
-    position: 'relative',
+    position: "relative",
   },
   centerCircle: {
-    position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f4f4f4',
-    borderRadius: 100, // Make it a circle
+    position: "absolute",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f4f4f4",
+    borderRadius: 100,
     borderWidth: 6,
-    borderColor: 'rgba(255, 184, 0, 0.2)',
+    borderColor: "rgba(255, 184, 0, 0.2)",
   },
   centerMonthText: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFB800',
+    fontWeight: "bold",
+    color: "#4CAF50",
   },
   centerYearText: {
     fontSize: 16,
-    color: '#888',
+    color: "#888",
   },
   monthButton: {
-  position: "absolute",  // ✅ ensures proper centering
-  backgroundColor: "#fff",
-  justifyContent: "center",
-  alignItems: "center",
-  elevation: 2,
-  shadowColor: "#000",
-  shadowOpacity: 0.1,
-  shadowRadius: 3,
-  shadowOffset: { width: 0, height: 1 },
-  borderWidth: 1,
-  borderColor: "#eee",
-},
-
+    position: "absolute",
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
   monthText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#555',
+    fontWeight: "600",
+    color: "#555",
   },
   selectedMonthButton: {
-    backgroundColor: '#FFB800',
-    borderColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: "#4CAF50",
+    borderColor: "rgba(255,255,255,0.5)",
     borderWidth: 2,
     elevation: 5,
   },
   selectedMonthText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
 
