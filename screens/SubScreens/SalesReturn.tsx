@@ -485,7 +485,7 @@ export default function SalesReturnEntryReportScreen() {
           {/* Loading Indicator */}
           {isFetchingMore && (
             <View style={styles.loadMoreContainer}>
-              <ActivityIndicator size="small" color="#FF8F3C" />
+              <ActivityIndicator size="small" color="#ffffffff" />
               <Text style={styles.loadMoreText}>Loading more entries...</Text>
             </View>
           )}

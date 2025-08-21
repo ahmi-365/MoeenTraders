@@ -420,7 +420,7 @@ export default function PurchaseEntryReportScreen() {
             disabled={isFetchingMore}
           >
             {isFetchingMore ? (
-              <ActivityIndicator size="small" color="#FF8F3C" />
+              <ActivityIndicator size="small" color="#ffffffff" />
             ) : (
               <Text style={styles.loadMoreText}>Load More</Text>
             )}

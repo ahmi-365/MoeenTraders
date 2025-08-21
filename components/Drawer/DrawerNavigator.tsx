@@ -20,6 +20,7 @@ import {
   UIManager,
   View,
   Alert,
+  SafeAreaView
 } from "react-native";
 import { useUserStore } from "../../stores/userStore";
 import MonthYearFilter from "./MonthYearFilter";
@@ -32,23 +33,18 @@ import SuppliersPayments from "@/screens/SubScreens/SuppliersPayments";
 import Adjustments from "@/screens/SubScreens/Adjustments";
 import Transfers from "@/screens/SubScreens/Transfers";
 import Expenses from "@/screens/SubScreens/Expenses";
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const Drawer = createDrawerNavigator();
 
-// Enable LayoutAnimation on Android
-if (
-  Platform.OS === "android" &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 // --- Custom Drawer Content Component ---
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const { user, status, clearUser } = useUserStore();
   const [expandReport, setExpandReport] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false); // Prevent multiple navigations
+  const insets = useSafeAreaInsets(); // <-- ADD THIS LINE
 
+  // --- ADD THIS ANIMATION LOGIC BACK ---
   const animatedHeight = useRef(new Animated.Value(0)).current;
   const animatedOpacity = useRef(new Animated.Value(0)).current;
 
@@ -56,73 +52,51 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const SUBMENU_ITEMS_COUNT = 12; 
   const TOTAL_SUBMENU_HEIGHT = SUBMENU_ITEMS_COUNT * SUBMENU_ITEM_HEIGHT;
 
-  const toggleReport = useCallback(() => {
-    if (isNavigating) return; // Prevent action during navigation
-    
+// --- REPLACE YOUR OLD FUNCTIONS WITH THIS BLOCK ---
+const toggleReport = useCallback(() => {
     const targetValue = expandReport ? 0 : 1;
     setExpandReport(!expandReport);
 
     Animated.parallel([
-      Animated.timing(animatedHeight, {
+        Animated.timing(animatedHeight, {
         toValue: targetValue === 1 ? TOTAL_SUBMENU_HEIGHT : 0, 
-        duration: 400,
+        duration: 350,
         easing: Easing.out(Easing.ease),
         useNativeDriver: false,
-      }),
-      Animated.timing(animatedOpacity, {
+        }),
+        Animated.timing(animatedOpacity, {
         toValue: targetValue,
-        duration: 300,
+        duration: 250,
         easing: Easing.ease,
         useNativeDriver: false,
-      }),
+        }),
     ]).start();
-  }, [expandReport, animatedHeight, animatedOpacity, isNavigating]);
+}, [expandReport, animatedHeight, animatedOpacity]);
 
-  // Improved navigation handler with error handling
-  const handleNavigation = useCallback((screenName: string) => {
-    if (isNavigating) return; // Prevent multiple rapid taps
-
-    setIsNavigating(true);
-    
+const handleNavigation = useCallback((screenName: string) => {
     try {
-      // Check if the screen exists in the navigator
-      const routeNames = props.navigation.getState()?.routeNames || [];
-      
-      if (routeNames.includes(screenName)) {
+        // Navigate to the screen
         props.navigation.navigate(screenName);
-      } else {
-        // console.warn(`Screen "${screenName}" not found in navigation stack`);
-        Alert.alert('Navigation Error', `Screen "${screenName}" is not available.`);
-      }
+        // And close the drawer for better UX
+        props.navigation.closeDrawer(); 
     } catch (error) {
-      console.error('Navigation error:', error);
-      Alert.alert('Navigation Error', 'Unable to navigate to the selected screen.');
-    } finally {
-      // Reset navigation flag after a short delay
-      setTimeout(() => {
-        setIsNavigating(false);
-      }, 500);
+        console.error('Navigation error:', error);
+        Alert.alert('Navigation Error', 'Unable to navigate to the selected screen.');
     }
-  }, [props.navigation, isNavigating]);
+}, [props.navigation]);
 
-  const handleLogout = useCallback(async () => {
-    if (isNavigating) return;
-    
+const handleLogout = useCallback(async () => {
     try {
-      setIsNavigating(true);
-      await clearUser();
-      
-      props.navigation.reset({
+        await clearUser();
+        props.navigation.reset({
         index: 0,
         routes: [{ name: "Login" }],
-      });
+        });
     } catch (error) {
-      console.error('Logout error:', error);
-      Alert.alert('Logout Error', 'Unable to logout. Please try again.');
-    } finally {
-      setIsNavigating(false);
+        console.error('Logout error:', error);
+        Alert.alert('Logout Error', 'Unable to logout. Please try again.');
     }
-  }, [clearUser, props.navigation, isNavigating]);
+}, [clearUser, props.navigation]);
 
   const subMenuItems = [
     { name: "Purchases", icon: "bag-outline", screen: "PurchaseEntryReport" },
@@ -155,107 +129,86 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
     { name: "Expenses", icon: "receipt-outline", screen: "Expenses" },
   ];
 
-  return (
-    <DrawerContentScrollView
-      {...props}
-      contentContainerStyle={styles.drawerContainer}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.drawerContent}>
-        <View style={styles.header}>
-          <View style={styles.avatar}>
-            <Ionicons name="person-outline" size={28} color="#FF8F3C" />
-          </View>
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>
-              {user?.name || (status === "guest" ? "Guest User" : "Superadmin")}
-            </Text>
-            <Text
-              style={styles.userEmail}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {user?.email || "admin@example.com"}
-            </Text>
-          </View>
+return (
+    <View style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+      {/* HEADER: Reduced padding - use smaller value or just status bar height */}
+      <View style={[styles.header, { 
+        paddingTop: insets.top > 0 ? Math.max(insets.top + 20, 8) : 8 
+      }]}>
+        <View style={styles.avatar}>
+          <Ionicons name="person-outline" size={28} color="#FF8F3C" />
         </View>
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>
+            {user?.name || (status === "guest" ? "Guest User" : "Superadmin")}
+          </Text>
+          <Text style={styles.userEmail} numberOfLines={1} ellipsizeMode="tail">
+            {user?.email || "admin@example.com"}
+          </Text>
+        </View>
+      </View>
 
+      {/* SCROLLABLE AREA: Remove default padding and content insets */}
+      <DrawerContentScrollView 
+        {...props} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: 0 }}
+        style={{ paddingTop: 0 }}
+        automaticallyAdjustContentInsets={false}
+        contentInset={{ top: 0, left: 0, bottom: 0, right: 0 }}
+      >
         <View style={styles.menuContainer}>
-          <TouchableOpacity
-            style={[styles.menuItem, isNavigating && styles.disabledButton]}
-            onPress={() => handleNavigation("Dashboard")}
-            disabled={isNavigating}
-            activeOpacity={0.7}
-          >
+          {/* All your TouchabaleOpacity menu items go here, unchanged */}
+          <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation("Dashboard")} activeOpacity={0.7}>
             <Ionicons name="speedometer-outline" size={22} color="#333" />
             <Text style={styles.menuText}>Dashboard</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.menuItem, isNavigating && styles.disabledButton]} 
-            onPress={toggleReport}
-            disabled={isNavigating}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.menuItem} onPress={toggleReport} activeOpacity={0.7}>
             <Ionicons name="document-text-outline" size={22} color="#333" />
             <Text style={styles.menuText}>Data Entry Report</Text>
             <Ionicons
-              name={
-                expandReport ? "chevron-up-outline" : "chevron-down-outline"
-              }
+              name={expandReport ? "chevron-up-outline" : "chevron-down-outline"}
               size={20}
               color="#333"
               style={styles.chevron}
             />
           </TouchableOpacity>
 
-          {/* Improved Animated Submenu */}
           <Animated.View
             style={[
               styles.subMenu,
               {
-                height: animatedHeight,
+                maxHeight: animatedHeight,
                 opacity: animatedOpacity,
               },
             ]}
           >
-            {subMenuItems.map((item, index) => (
+            {subMenuItems.map((item) => (
               <TouchableOpacity
-                key={`${item.screen}-${index}`} // Better key prop
-                style={[styles.subMenuItem, isNavigating && styles.disabledButton]}
+                key={item.screen}
+                style={styles.subMenuItem}
                 onPress={() => handleNavigation(item.screen)}
-                disabled={isNavigating}
                 activeOpacity={0.7}
               >
-                <Ionicons
-                  name={item.icon as keyof typeof Ionicons.glyphMap}
-                  size={20}
-                  color="#555"
-                />
+                <Ionicons name={item.icon as any} size={20} color="#555" />
                 <Text style={styles.subMenuText}>{item.name}</Text>
               </TouchableOpacity>
             ))}
           </Animated.View>
         </View>
-      </View>
+      </DrawerContentScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[styles.logoutBtn, isNavigating && styles.disabledButton]} 
-          onPress={handleLogout}
-          disabled={isNavigating}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="log-out-outline" size={20} color="#FF8F3C" />
-          <Text style={styles.logoutText}>
-            {isNavigating ? "Processing..." : "Logout"}
-          </Text>
+      {/* FOOTER: We apply the bottom inset as padding here for devices like iPhone X */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom > 0 ? insets.bottom : 20 }]}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.7}>
+          <Ionicons name="log-out-outline" size={22} color="#FF8F3C" />
+          <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
-    </DrawerContentScrollView>
-  );
+    </View>
+);
 };
-
 const DrawerNavigator = () => {
   return (
     <Drawer.Navigator
@@ -334,12 +287,13 @@ const DrawerNavigator = () => {
 
 const styles = StyleSheet.create({
   // Updated Drawer Container Styles
-  drawerContainer: {
-    flexGrow: 1,
-    paddingBottom: 20,
-  },
+drawerContainer: {
+  flexGrow: 1,
+  justifyContent: 'space-between', // <--- ADD THIS LINE
+  paddingBottom: 20,
+},
   drawerContent: {
-    flex: 1,
+    // flex: 1,
   },
   menuContainer: {
     paddingHorizontal: 15,
@@ -438,12 +392,14 @@ const styles = StyleSheet.create({
   },
 
   // Footer Styles
-  footer: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-    backgroundColor: "#f8f9fa",
-  },
+footer: {
+  padding: 20,
+  borderTopWidth: 1,
+  borderTopColor: "#eee",
+  backgroundColor: "#f8f9fa",
+  zIndex: 10,
+},
+
   logoutBtn: {
     flexDirection: "row",
     alignItems: "center",

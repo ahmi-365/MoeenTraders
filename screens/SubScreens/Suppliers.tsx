@@ -334,7 +334,7 @@ export default function SupplierEntryReportScreen() {
           )}
           {isFetchingMore && (
             <View style={styles.footerLoader}>
-              <ActivityIndicator size="small" color="#FF8F3C" />
+              <ActivityIndicator size="small" color="#ffffffff" />
             </View>
           )}
           {!canLoadMore && entries.length > 0 && (

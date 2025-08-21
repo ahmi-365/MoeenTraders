@@ -342,7 +342,7 @@ export default function ProductEntryReportScreen() {
           {/* Loading Indicator for pagination */}
           {isFetchingMore && (
             <View style={styles.footerLoader}>
-              <ActivityIndicator size="small" color="#FF8F3C" />
+              <ActivityIndicator size="small" color="#ffffffff" />
             </View>
           )}
 
