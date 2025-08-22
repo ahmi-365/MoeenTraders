@@ -241,19 +241,6 @@ const fetchDashboardData = async () => {
       },
     },
   ];
-
-  const handleInventoryAlertPress = (item: InventoryAlert, index: number) => {
-    console.log("Inventory alert pressed:", item);
-    // Navigate to Products screen to see inventory details
-    navigation.navigate("Products");
-  };
-
-  const handleTopPerformerPress = (item: TopPerformer, index: number) => {
-    console.log("Top performer pressed:", item);
-    // Navigate to Products screen to see product details
-    navigation.navigate("Products");
-  };
-
   if (loading) {
     return (
       <View style={styles.center}>
@@ -408,7 +395,6 @@ const fetchDashboardData = async () => {
           title="Inventory Alerts"
           data={dashboardData.alertProductsQty}
           columns={inventoryAlertsColumns}
-          onRowPress={handleInventoryAlertPress}
           emptyStateConfig={{
             emptyTitle: "No Low Stock Alerts",
             emptyMessage: "All products are well stocked",
@@ -419,9 +405,8 @@ const fetchDashboardData = async () => {
         {/* Top Performers Table */}
         <ReusableTable
           title="Top Performers"
-          data={dashboardData.topSellingProducts}
+  data={dashboardData.topSellingProducts?.slice(0, 5)} 
           columns={topPerformersColumns}
-          onRowPress={handleTopPerformerPress}
           showIndex={true}
           emptyStateConfig={{
             emptyTitle: "No Sales Data",

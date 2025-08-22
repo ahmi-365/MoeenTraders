@@ -8,13 +8,10 @@
     "scheme": "moeentraders",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ahmi365.MoeenTraders"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#ffffff"
-      },
       "package": "com.ahmi365.MoeenTraders"
     },
     "web": {
