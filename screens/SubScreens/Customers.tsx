@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// Make sure the path to your ReusableTable component is correct
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import ReusableTable, { Column } from "../../components/Table/ReusableTable";
 
 // --- 1. Type Definition ---
@@ -187,45 +187,77 @@ export default function CustomerEntryReportScreen() {
     };
   };
 
-  const fetchEntries = useCallback(
-    async (page: number, isInitialLoad: boolean = false) => {
-      if (isFetchingMore && !isInitialLoad) return;
 
-      if (isInitialLoad) {
-        setIsLoadingFirstTime(true);
+const fetchEntries = useCallback(
+  async (page: number, isInitialLoad: boolean = false) => {
+    if (isFetchingMore && !isInitialLoad) return;
+
+    if (isInitialLoad) {
+      setIsLoadingFirstTime(true);
+      setError(null);
+    } else {
+      setIsFetchingMore(true);
+    }
+
+    const formatApiDate = (date: Date) => date.toISOString().split("T")[0];
+
+    let apiUrl = `https://dewan-chemicals.majesticsofts.com/api/reports/data-entry/customer?page=${page}`;
+    if (startDate && endDate) {
+      apiUrl += `&start_date=${formatApiDate(startDate)}`;
+      apiUrl += `&end_date=${formatApiDate(endDate)}`;
+    }
+
+    // Unique cache key for customer entries
+    const cacheKey = `customerEntries-${page}-${startDate ? formatApiDate(startDate) : "null"}-${endDate ? formatApiDate(endDate) : "null"}`;
+
+    try {
+      const response = await axios.get(apiUrl, {
+        headers: { Accept: "application/json" },
+      });
+      const fetchedData = response.data.data.map(transformApiData);
+
+      // update state
+      setEntries((prev) =>
+        isInitialLoad ? fetchedData : [...prev, ...fetchedData]
+      );
+      setCurrentPage(response.data.current_page || 1);
+      setTotalPages(response.data.total_pages || 1);
+
+      // save to AsyncStorage
+      await AsyncStorage.setItem(
+        cacheKey,
+        JSON.stringify({
+          data: fetchedData,
+          currentPage: response.data.current_page || 1,
+          totalPages: response.data.total_pages || 1,
+        })
+      );
+    } catch (err: any) {
+      console.log("API failed, trying cache...");
+
+      // Load cache if API fails
+      const cached = await AsyncStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        setEntries((prev) =>
+          isInitialLoad ? parsed.data : [...prev, ...parsed.data]
+        );
+        setCurrentPage(parsed.currentPage);
+        setTotalPages(parsed.totalPages);
         setError(null);
       } else {
-        setIsFetchingMore(true);
-      }
-
-      let apiUrl = `https://dewan-chemicals.majesticsofts.com/api/reports/data-entry/customer?page=${page}`;
-      if (startDate && endDate) {
-        apiUrl += `&start_date=${formatApiDate(startDate)}`;
-        apiUrl += `&end_date=${formatApiDate(endDate)}`;
-      }
-
-      try {
-        const response = await axios.get(apiUrl, {
-          headers: { Accept: "application/json" },
-        });
-        const fetchedData = response.data.data.map(transformApiData);
-
-        setEntries((prev) =>
-          isInitialLoad ? fetchedData : [...prev, ...fetchedData]
-        );
-        setCurrentPage(response.data.current_page || 1);
-        setTotalPages(response.data.total_pages || 1);
-      } catch (err: any) {
         setError(
           axios.isAxiosError(err) ? err.message : "An unknown error occurred."
         );
-      } finally {
-        setIsLoadingFirstTime(false);
-        setIsFetchingMore(false);
       }
-    },
-    [startDate, endDate, isFetchingMore]
-  );
+    } finally {
+      setIsLoadingFirstTime(false);
+      setIsFetchingMore(false);
+    }
+  },
+  [startDate, endDate, isFetchingMore]
+);
+
 
   useEffect(() => {
     fetchEntries(1, true);

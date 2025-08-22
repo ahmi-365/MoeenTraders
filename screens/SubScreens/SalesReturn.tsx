@@ -12,6 +12,8 @@ import {
   View,
 } from "react-native";
 import ReusableTable, { Column } from "../../components/Table/ReusableTable";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import NetInfo from "@react-native-community/netinfo";
 
 // --- 1. Type Definition ---
 interface SaleReturnEntry {
@@ -236,112 +238,108 @@ export default function SalesReturnEntryReportScreen() {
     });
   };
 
-  const fetchEntries = async (page: number, isInitialLoad: boolean = false) => {
-    try {
-      // Prevent multiple simultaneous requests
-      if (isFetchingMore && !isInitialLoad) {
-        console.log("Already fetching, skipping request");
-        return;
-      }
+const SALE_RETURN_CACHE_KEY = "sale_return_entries";
 
-      if (isInitialLoad) {
-        setIsLoading(true);
-        setError(null);
-        console.log("Initial load - resetting state");
-      } else {
-        setIsFetchingMore(true);
-        console.log(`Loading more entries for page ${page}`);
-      }
+const fetchEntries = async (page: number, isInitialLoad: boolean = false) => {
+  try {
+    if (isFetchingMore && !isInitialLoad) {
+      console.log("Already fetching, skipping request");
+      return;
+    }
 
+    if (isInitialLoad) {
+      setIsLoading(true);
+      setError(null);
+    } else {
+      setIsFetchingMore(true);
+    }
+
+    // Check internet connection
+    const netInfo = await NetInfo.fetch();
+    const hasInternet = netInfo.isConnected && netInfo.isInternetReachable;
+
+    if (hasInternet) {
+      // ---- ONLINE MODE ----
       let apiUrl = `https://dewan-chemicals.majesticsofts.com/api/reports/data-entry/sale-return?page=${page}`;
       if (startDate && endDate) {
         apiUrl += `&start_date=${formatApiDate(startDate)}`;
         apiUrl += `&end_date=${formatApiDate(endDate)}`;
       }
 
-      console.log("Fetching Sale Return Entries:", {
-        apiUrl,
-        page,
-        isInitialLoad,
-      });
 
       const response = await axios.get(apiUrl, {
         headers: { Accept: "application/json" },
-        timeout: 10000, // 10 second timeout
+        timeout: 10000,
       });
 
-      console.log("API Response:", {
-        currentPage: response.data?.current_page,
-        totalPages: response.data?.total_pages,
-        dataLength: response.data?.data?.length,
-        isInitialLoad,
-      });
 
-      if (
-        response.data &&
-        response.data.data &&
-        Array.isArray(response.data.data)
-      ) {
+      if (response.data && Array.isArray(response.data.data)) {
         const fetchedData = transformApiData(response.data.data);
 
         if (isInitialLoad) {
-          console.log("Setting initial entries:", fetchedData.length);
           setEntries(fetchedData);
           setCurrentPage(response.data.current_page || 1);
         } else {
-          console.log("Appending entries:", fetchedData.length);
-          setEntries((prevEntries) => {
-            const newEntries = [...prevEntries, ...fetchedData];
-            console.log("Total entries after append:", newEntries.length);
-            return newEntries;
-          });
+          setEntries((prev) => [...prev, ...fetchedData]);
           setCurrentPage(response.data.current_page || page);
         }
 
         setTotalPages(response.data.total_pages || 1);
+
+        // Save to AsyncStorage for offline use
+        const toStore = {
+          entries: isInitialLoad
+            ? fetchedData
+            : [...entries, ...fetchedData],
+          currentPage: response.data.current_page || 1,
+          totalPages: response.data.total_pages || 1,
+        };
+        await AsyncStorage.setItem(SALE_RETURN_CACHE_KEY, JSON.stringify(toStore));
       } else {
-        console.error("Invalid response structure:", response.data);
         throw new Error("Invalid response format");
       }
-    } catch (err) {
-      console.error("Failed to fetch data:", err);
-      const errorMessage = axios.isAxiosError(err)
-        ? `Network error: ${err.message}`
-        : "Failed to load data. Please try again.";
-
-      if (isInitialLoad) {
-        setError(errorMessage);
+    } else {
+      // ---- OFFLINE MODE ----
+      console.log("No internet, loading cached Sale Return data...");
+      const cached = await AsyncStorage.getItem(SALE_RETURN_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        setEntries(parsed.entries || []);
+        setCurrentPage(parsed.currentPage || 1);
+        setTotalPages(parsed.totalPages || 1);
       } else {
-        // For load more errors, show a toast or alert instead of clearing all data
-        console.error("Load more failed:", errorMessage);
+        setError("No internet and no cached data available.");
       }
-    } finally {
-      setIsLoading(false);
-      setIsFetchingMore(false);
     }
-  };
+  } catch (err) {
+    console.error("Failed to fetch Sale Return data:", err);
+    const errorMessage = axios.isAxiosError(err)
+      ? `Network error: ${err.message}`
+      : "Failed to load data. Please try again.";
+
+    if (isInitialLoad) {
+      setError(errorMessage);
+    } else {
+      console.error("Load more failed:", errorMessage);
+    }
+  } finally {
+    setIsLoading(false);
+    setIsFetchingMore(false);
+  }
+};
 
   // Initial load and date filter changes
   useEffect(() => {
-    console.log("Date filter changed, fetching initial data");
     fetchEntries(1, true);
   }, [startDate, endDate]);
 
   const handleRefresh = () => {
-    console.log("Manual refresh triggered");
     fetchEntries(1, true);
   };
 
   const handleLoadMore = () => {
     const nextPage = currentPage + 1;
-    console.log("Load more requested:", {
-      currentPage,
-      nextPage,
-      totalPages,
-      isFetchingMore,
-      isLoading,
-      currentEntriesCount: entries.length,
-    });
+   
 
     if (nextPage <= totalPages && !isFetchingMore && !isLoading) {
       fetchEntries(nextPage, false);

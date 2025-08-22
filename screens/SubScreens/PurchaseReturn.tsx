@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import ReusableTable, { Column } from "../../components/Table/ReusableTable";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // --- 1. Type Definition ---
 interface PurchaseReturnEntry {
@@ -200,12 +201,13 @@ export default function PurchaseReturnEntryReportScreen() {
         apiUrl += `&end_date=${formatApiDate(endDate)}`;
       }
 
-      console.log("Fetching Purchase Returns:", apiUrl);
+      const cacheKey = `purchaseReturn-${page}-${
+        startDate ? formatApiDate(startDate) : "null"
+      }-${endDate ? formatApiDate(endDate) : "null"}`;
+
       try {
         const response = await axios.get(apiUrl, {
-          headers: {
-            Accept: "application/json" /* Add Auth Token if needed */,
-          },
+          headers: { Accept: "application/json" },
         });
 
         if (response.data && response.data.data) {
@@ -253,10 +255,32 @@ export default function PurchaseReturnEntryReportScreen() {
           );
           setCurrentPage(response.data.current_page);
           setTotalPages(response.data.total_pages);
+
+          // ✅ Save to cache
+          await AsyncStorage.setItem(
+            cacheKey,
+            JSON.stringify({
+              data: fetchedData,
+              currentPage: response.data.current_page,
+              totalPages: response.data.total_pages,
+            })
+          );
         }
       } catch (err) {
-        console.error("Failed to fetch data:", err);
-        setError("Failed to load data. Please try again.");
+        console.error("API failed, trying cache:", err);
+
+        // ✅ Load cache if API fails
+        const cached = await AsyncStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setEntries((prev) =>
+            isInitialLoad ? parsed.data : [...prev, ...parsed.data]
+          );
+          setCurrentPage(parsed.currentPage);
+          setTotalPages(parsed.totalPages);
+        } else {
+          setError("Failed to load data. Please try again.");
+        }
       } finally {
         setIsLoading(false);
         setIsFetchingMore(false);

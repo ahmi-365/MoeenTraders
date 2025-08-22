@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import ReusableTable, { Column } from "../../components/Table/ReusableTable";
 import { PurchaseEntry } from "../../types/types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Helper component for displaying a row of details in the modal
 const DetailRow = ({
@@ -142,43 +143,43 @@ export default function PurchaseEntryReportScreen() {
     return date.toISOString().split("T")[0]; // YYYY-MM-DD format
   };
 
-  const buildApiUrl = (page: number) => {
-    let apiUrl = `https://dewan-chemicals.majesticsofts.com/api/reports/data-entry/purchase?page=${page}`;
 
-    if (startDate && endDate) {
-      apiUrl += `&start_date=${formatDateForAPI(startDate)}`;
-      apiUrl += `&end_date=${formatDateForAPI(endDate)}`;
+const buildApiUrl = (page: number) => {
+  let apiUrl = `https://dewan-chemicals.majesticsofts.com/api/reports/data-entry/purchase?page=${page}`;
+
+  if (startDate && endDate) {
+    apiUrl += `&start_date=${formatDateForAPI(startDate)}`;
+    apiUrl += `&end_date=${formatDateForAPI(endDate)}`;
+  }
+
+  return apiUrl;
+};
+
+const fetchPurchaseEntries = async (
+  page: number = 1,
+  isInitialLoad: boolean = false
+) => {
+  if (isFetchingMore && !isInitialLoad) return;
+
+  try {
+    if (isInitialLoad) {
+      setLoading(true);
+      setCurrentPage(1);
+      setTotalPages(1);
+    } else {
+      setIsFetchingMore(true);
     }
 
-    return apiUrl;
-  };
+    setError(null);
 
-  const fetchPurchaseEntries = async (
-    page: number = 1,
-    isInitialLoad: boolean = false
-  ) => {
-    if (isFetchingMore && !isInitialLoad) return;
+    const apiUrl = buildApiUrl(page);
+    const cacheKey = `purchaseEntries-${page}-${startDate ? formatDateForAPI(startDate) : "null"}-${endDate ? formatDateForAPI(endDate) : "null"}`;
+
 
     try {
-      if (isInitialLoad) {
-        setLoading(true);
-        setCurrentPage(1);
-        setTotalPages(1);
-      } else {
-        setIsFetchingMore(true);
-      }
-
-      setError(null);
-
-      const apiUrl = buildApiUrl(page);
-      console.log("Fetching Purchases:", apiUrl);
-
+      // Try fetching from API
       const response = await axios.get(apiUrl, {
-        headers: {
-          Accept: "application/json",
-          // Add your bearer token here if needed
-          // Authorization: "Bearer YOUR_TOKEN_HERE"
-        },
+        headers: { Accept: "application/json" },
       });
 
       if (response.data && response.data.data) {
@@ -196,7 +197,7 @@ export default function PurchaseEntryReportScreen() {
                 minute: "2-digit",
                 hour12: true,
               });
-            } catch (e) {
+            } catch {
               formattedTime = item.created_at;
             }
           }
@@ -207,7 +208,7 @@ export default function PurchaseEntryReportScreen() {
             try {
               const date = new Date(item.actionable.purchase_date);
               formattedPurchaseDate = date.toLocaleDateString("en-US");
-            } catch (e) {
+            } catch {
               formattedPurchaseDate = item.actionable.purchase_date;
             }
           }
@@ -252,16 +253,46 @@ export default function PurchaseEntryReportScreen() {
 
         setCurrentPage(response.data.current_page || page);
         setTotalPages(response.data.total_pages || 1);
+
+        // Save response to cache
+        await AsyncStorage.setItem(
+          cacheKey,
+          JSON.stringify({
+            data,
+            currentPage: response.data.current_page || page,
+            totalPages: response.data.total_pages || 1,
+          })
+        );
       }
-    } catch (err) {
-      console.error("Error fetching purchase entries:", err);
-      setError("Failed to fetch purchase entries.");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-      setIsFetchingMore(false);
+    } catch (apiErr) {
+      console.log("API failed, loading from cache...", apiErr);
+
+      // Load cached data if API fails
+      const cached = await AsyncStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (isInitialLoad) {
+          setPurchaseEntries(parsed.data);
+        } else {
+          setPurchaseEntries((prev) => [...prev, ...parsed.data]);
+        }
+        setCurrentPage(parsed.currentPage);
+        setTotalPages(parsed.totalPages);
+        setError(null);
+      } else {
+        setError("Failed to fetch purchase entries.");
+      }
     }
-  };
+  } catch (err) {
+    console.error("Error fetching purchase entries:", err);
+    setError("Failed to fetch purchase entries.");
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+    setIsFetchingMore(false);
+  }
+};
+
 
   const onRefresh = () => {
     setRefreshing(true);

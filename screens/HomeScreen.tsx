@@ -19,6 +19,7 @@ import {
   TableColumn,
   TopPerformer,
 } from "../types/dasboard"; // 👈 create a file for types
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function HomeScreen() {
   const { month, year } = useMonthYear();
@@ -31,23 +32,41 @@ export default function HomeScreen() {
 
   const apiUrl = `https://dewan-chemicals.majesticsofts.com/api/dashboard?month=${month}&year=${year}`;
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
+const fetchDashboardData = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+
+    // Try fetching from API first
+    const response = await fetch(apiUrl);
+    const data: DashboardResponse = await response.json();
+
+    // Set state with API data
+    setDashboardData(data);
+
+    // Save to AsyncStorage for offline usage
+    await AsyncStorage.setItem(
+      `dashboardData-${month}-${year}`, // unique key per month & year
+      JSON.stringify(data)
+    );
+  } catch (err) {
+    console.log("API fetch failed, loading from AsyncStorage...", err);
+
+    const cachedData = await AsyncStorage.getItem(
+      `dashboardData-${month}-${year}`
+    );
+
+    if (cachedData) {
+      setDashboardData(JSON.parse(cachedData));
       setError(null);
-
-      const response = await fetch(apiUrl);
-      const data: DashboardResponse = await response.json();
-
-      setDashboardData(data);
-    } catch (err) {
+    } else {
       setError("Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
     }
-  };
-  const monthName = (monthNumber: number) => {
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+  }
+};  const monthName = (monthNumber: number) => {
     const months = [
       "Jan",
       "Feb",

@@ -12,6 +12,8 @@ import {
   View,
 } from "react-native";
 import ReusableTable, { Column } from "../../components/Table/ReusableTable";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import NetInfo from "@react-native-community/netinfo";
 
 // --- 1. Type Definition ---
 interface SalesEntry {
@@ -246,9 +248,10 @@ export default function SalesEntryReportScreen() {
     });
   };
 
+  const STORAGE_KEY = "sales_entries";
+
   const fetchEntries = async (page: number, isInitialLoad: boolean = false) => {
     try {
-      // Prevent multiple simultaneous requests
       if (isFetchingMore && !isInitialLoad) {
         console.log("Already fetching, skipping request");
         return;
@@ -257,57 +260,60 @@ export default function SalesEntryReportScreen() {
       if (isInitialLoad) {
         setIsLoading(true);
         setError(null);
-        console.log("Initial load - resetting state");
       } else {
         setIsFetchingMore(true);
-        console.log(`Loading more entries for page ${page}`);
       }
 
-      let apiUrl = `https://dewan-chemicals.majesticsofts.com/api/reports/data-entry/sale?page=${page}`;
-      if (startDate && endDate) {
-        apiUrl += `&start_date=${formatApiDate(startDate)}`;
-        apiUrl += `&end_date=${formatApiDate(endDate)}`;
-      }
+      // Check internet status
+      const netInfo = await NetInfo.fetch();
+      const hasInternet = netInfo.isConnected && netInfo.isInternetReachable;
 
-      console.log("Fetching Sales Entries:", { apiUrl, page, isInitialLoad });
-
-      const response = await axios.get(apiUrl, {
-        headers: { Accept: "application/json" },
-        timeout: 10000, // 10 second timeout
-      });
-
-      console.log("API Response:", {
-        currentPage: response.data?.current_page,
-        totalPages: response.data?.total_pages,
-        dataLength: response.data?.data?.length,
-        isInitialLoad,
-      });
-
-      if (
-        response.data &&
-        response.data.data &&
-        Array.isArray(response.data.data)
-      ) {
-        const fetchedData = transformApiData(response.data.data);
-
-        if (isInitialLoad) {
-          console.log("Setting initial entries:", fetchedData.length);
-          setEntries(fetchedData);
-          setCurrentPage(response.data.current_page || 1);
-        } else {
-          console.log("Appending entries:", fetchedData.length);
-          setEntries((prevEntries) => {
-            const newEntries = [...prevEntries, ...fetchedData];
-            console.log("Total entries after append:", newEntries.length);
-            return newEntries;
-          });
-          setCurrentPage(response.data.current_page || page);
+      if (hasInternet) {
+        // --- ONLINE MODE: fetch from API ---
+        let apiUrl = `https://dewan-chemicals.majesticsofts.com/api/reports/data-entry/sale?page=${page}`;
+        if (startDate && endDate) {
+          apiUrl += `&start_date=${formatApiDate(startDate)}`;
+          apiUrl += `&end_date=${formatApiDate(endDate)}`;
         }
 
-        setTotalPages(response.data.total_pages || 1);
+        const response = await axios.get(apiUrl, {
+          headers: { Accept: "application/json" },
+          timeout: 10000,
+        });
+
+        if (response.data && Array.isArray(response.data.data)) {
+          const fetchedData = transformApiData(response.data.data);
+
+          if (isInitialLoad) {
+            setEntries(fetchedData);
+            setCurrentPage(response.data.current_page || 1);
+          } else {
+            setEntries((prev) => [...prev, ...fetchedData]);
+            setCurrentPage(response.data.current_page || page);
+          }
+
+          setTotalPages(response.data.total_pages || 1);
+
+          // Save to AsyncStorage (offline caching)
+          const toStore = {
+            entries: isInitialLoad ? fetchedData : [...entries, ...fetchedData],
+            currentPage: response.data.current_page || 1,
+            totalPages: response.data.total_pages || 1,
+          };
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+        }
       } else {
-        console.error("Invalid response structure:", response.data);
-        throw new Error("Invalid response format");
+        // --- OFFLINE MODE: load from AsyncStorage ---
+        console.log("No internet, loading cached data...");
+        const cached = await AsyncStorage.getItem(STORAGE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setEntries(parsed.entries || []);
+          setCurrentPage(parsed.currentPage || 1);
+          setTotalPages(parsed.totalPages || 1);
+        } else {
+          setError("No internet and no cached data available.");
+        }
       }
     } catch (err) {
       console.error("Failed to fetch data:", err);
@@ -318,7 +324,6 @@ export default function SalesEntryReportScreen() {
       if (isInitialLoad) {
         setError(errorMessage);
       } else {
-        // For load more errors, show a toast or alert instead of clearing all data
         console.error("Load more failed:", errorMessage);
       }
     } finally {
@@ -329,25 +334,16 @@ export default function SalesEntryReportScreen() {
 
   // Initial load and date filter changes
   useEffect(() => {
-    console.log("Date filter changed, fetching initial data");
     fetchEntries(1, true);
   }, [startDate, endDate]);
 
   const handleRefresh = () => {
-    console.log("Manual refresh triggered");
     fetchEntries(1, true);
   };
 
   const handleLoadMore = () => {
     const nextPage = currentPage + 1;
-    console.log("Load more requested:", {
-      currentPage,
-      nextPage,
-      totalPages,
-      isFetchingMore,
-      isLoading,
-      currentEntriesCount: entries.length,
-    });
+   
 
     if (nextPage <= totalPages && !isFetchingMore && !isLoading) {
       fetchEntries(nextPage, false);

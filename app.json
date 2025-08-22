@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "MoeenTraders",
-    "slug": "MoeenTraders",
+    "slug": "GoldenXApp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -39,6 +39,7 @@
       "eas": {
         "projectId": "242a120c-949d-41d3-ba51-8d8d3be429bf"
       }
-    }
+    },
+    "owner": "ahmi-365"
   }
 }

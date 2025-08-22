@@ -49,7 +49,6 @@ class AuthService {
         await AsyncStorage.setItem('userToken', token);
         await AsyncStorage.setItem('userData', JSON.stringify(userData));
 
-        console.log('Login Successful! User Data stored in AsyncStorage:', userData);
 
         return { token, user: userData };
       } else {

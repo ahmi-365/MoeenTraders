@@ -11,7 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// Ensure the path to your ReusableTable component is correct
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import NetInfo from "@react-native-community/netinfo";
 import ReusableTable, { Column } from "../../components/Table/ReusableTable";
 
 // --- 1. Type Definition ---
@@ -178,45 +179,75 @@ export default function SupplierEntryReportScreen() {
     };
   };
 
-  const fetchEntries = useCallback(
-    async (page: number, isInitialLoad: boolean = false) => {
-      if (isFetchingMore && !isInitialLoad) return;
-      if (isInitialLoad) {
-        setIsLoadingFirstTime(true);
-        setError(null);
-      } else {
-        setIsFetchingMore(true);
-      }
+const SUPPLIER_CACHE_KEY = "supplier_entries";
 
-      const formatApiDate = (date: Date) => date.toISOString().split("T")[0];
-      let apiUrl = `https://dewan-chemicals.majesticsofts.com/api/reports/data-entry/supplier?page=${page}`;
-      if (startDate && endDate) {
-        apiUrl += `&start_date=${formatApiDate(
-          startDate
-        )}&end_date=${formatApiDate(endDate)}`;
-      }
+const fetchEntries = useCallback(
+  async (page: number, isInitialLoad: boolean = false) => {
+    if (isFetchingMore && !isInitialLoad) return;
 
-      try {
+    if (isInitialLoad) {
+      setIsLoadingFirstTime(true);
+      setError(null);
+    } else {
+      setIsFetchingMore(true);
+    }
+
+    const formatApiDate = (date: Date) => date.toISOString().split("T")[0];
+    let apiUrl = `https://dewan-chemicals.majesticsofts.com/api/reports/data-entry/supplier?page=${page}`;
+    if (startDate && endDate) {
+      apiUrl += `&start_date=${formatApiDate(startDate)}&end_date=${formatApiDate(endDate)}`;
+    }
+
+    try {
+      // Check internet status
+      const netInfo = await NetInfo.fetch();
+      const hasInternet = netInfo.isConnected && netInfo.isInternetReachable;
+
+      if (hasInternet) {
+        // ---- ONLINE MODE ----
         const response = await axios.get(apiUrl, {
           headers: { Accept: "application/json" },
         });
+
         const fetchedData = response.data.data.map(transformApiData);
+
         setEntries((prev) =>
           isInitialLoad ? fetchedData : [...prev, ...fetchedData]
         );
         setCurrentPage(response.data.current_page || 1);
         setTotalPages(response.data.total_pages || 1);
-      } catch (err: any) {
-        setError(
-          axios.isAxiosError(err) ? err.message : "An unknown error occurred."
-        );
-      } finally {
-        setIsLoadingFirstTime(false);
-        setIsFetchingMore(false);
+
+        // Save to cache
+        const toStore = {
+          entries: isInitialLoad ? fetchedData : [...entries, ...fetchedData],
+          currentPage: response.data.current_page || 1,
+          totalPages: response.data.total_pages || 1,
+        };
+        await AsyncStorage.setItem(SUPPLIER_CACHE_KEY, JSON.stringify(toStore));
+      } else {
+        // ---- OFFLINE MODE ----
+        console.log("No internet, loading cached supplier data...");
+        const cached = await AsyncStorage.getItem(SUPPLIER_CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setEntries(parsed.entries || []);
+          setCurrentPage(parsed.currentPage || 1);
+          setTotalPages(parsed.totalPages || 1);
+        } else {
+          setError("No internet and no cached data available.");
+        }
       }
-    },
-    [startDate, endDate, isFetchingMore]
-  );
+    } catch (err: any) {
+      setError(
+        axios.isAxiosError(err) ? err.message : "An unknown error occurred."
+      );
+    } finally {
+      setIsLoadingFirstTime(false);
+      setIsFetchingMore(false);
+    }
+  },
+  [startDate, endDate, isFetchingMore, entries] // include entries in deps
+);
 
   useEffect(() => {
     fetchEntries(1, true);

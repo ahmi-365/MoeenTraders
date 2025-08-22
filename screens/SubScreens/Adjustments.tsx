@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// Adjust the path to your ReusableTable component if necessary
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import ReusableTable, { Column } from "../../components/Table/ReusableTable";
 
 // --- 1. Type Definition ---
@@ -208,6 +208,7 @@ export default function SupplierPaymentEntryReportScreen() {
   const fetchEntries = useCallback(
     async (page: number, isInitialLoad: boolean = false) => {
       if (isFetchingMore && !isInitialLoad) return;
+
       if (isInitialLoad) {
         setIsLoadingFirstTime(true);
         setError(null);
@@ -223,20 +224,52 @@ export default function SupplierPaymentEntryReportScreen() {
         )}&end_date=${formatApiDate(endDate)}`;
       }
 
+      // Unique cache key based on page + filters
+      const cacheKey = `supplierPayment-${page}-${
+        startDate ? formatApiDate(startDate) : "null"
+      }-${endDate ? formatApiDate(endDate) : "null"}`;
+
       try {
         const response = await axios.get(apiUrl, {
           headers: { Accept: "application/json" },
         });
+
         const fetchedData = response.data.data.map(transformApiData);
+
+        // Save data to state
         setEntries((prev) =>
           isInitialLoad ? fetchedData : [...prev, ...fetchedData]
         );
         setCurrentPage(response.data.current_page || 1);
         setTotalPages(response.data.total_pages || 1);
-      } catch (err: any) {
-        setError(
-          axios.isAxiosError(err) ? err.message : "An unknown error occurred."
+
+        // Cache response for offline use
+        await AsyncStorage.setItem(
+          cacheKey,
+          JSON.stringify({
+            data: fetchedData,
+            currentPage: response.data.current_page || 1,
+            totalPages: response.data.total_pages || 1,
+          })
         );
+      } catch (err: any) {
+        console.log("API failed, trying cache:", err.message);
+
+        // Load cached data if available
+        const cached = await AsyncStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setEntries((prev) =>
+            isInitialLoad ? parsed.data : [...prev, ...parsed.data]
+          );
+          setCurrentPage(parsed.currentPage);
+          setTotalPages(parsed.totalPages);
+          setError(null); // no error since we have cache
+        } else {
+          setError(
+            axios.isAxiosError(err) ? err.message : "An unknown error occurred."
+          );
+        }
       } finally {
         setIsLoadingFirstTime(false);
         setIsFetchingMore(false);

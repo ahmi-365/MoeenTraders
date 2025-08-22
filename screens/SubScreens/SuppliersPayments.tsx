@@ -11,7 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// Adjust the path to your ReusableTable component if necessary
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import NetInfo from "@react-native-community/netinfo";
 import ReusableTable, { Column } from "../../components/Table/ReusableTable";
 
 // --- 1. Type Definition ---
@@ -167,6 +168,7 @@ export default function SupplierPaymentEntryReportScreen() {
     value: any,
     defaultValue: string = "0.00"
   ): string => {
+    if (value === null || value === undefined) return defaultValue;
     const num = Number(value);
     return isNaN(num)
       ? defaultValue
@@ -177,11 +179,11 @@ export default function SupplierPaymentEntryReportScreen() {
   };
 
   const transformApiData = (apiItem: any): SupplierPaymentEntry => {
+    
     const actionableData = apiItem.actionable || {};
     const supplierData = actionableData.supplier || {};
     const adminData = apiItem.admin || {};
-
-    return {
+    const transformed = {
       trx: actionableData.trx?.toString() ?? "N/A",
       supplierName: supplierData.name?.toString() ?? "N/A",
       amount: formatCurrency(actionableData.amount),
@@ -203,47 +205,80 @@ export default function SupplierPaymentEntryReportScreen() {
       supplierRecordCreatedAt: formatDateOrNA(supplierData.created_at),
       supplierRecordUpdatedAt: formatDateOrNA(supplierData.updated_at),
     };
+    return transformed;
   };
 
-  const fetchEntries = useCallback(
-    async (page: number, isInitialLoad: boolean = false) => {
-      if (isFetchingMore && !isInitialLoad) return;
-      if (isInitialLoad) {
-        setIsLoadingFirstTime(true);
-        setError(null);
-      } else {
-        setIsFetchingMore(true);
-      }
+const SUPPLIER_CACHE_KEY = "supplier_payment_entries";
 
-      const formatApiDate = (date: Date) => date.toISOString().split("T")[0];
-      let apiUrl = `https://dewan-chemicals.majesticsofts.com/api/reports/data-entry/supplier-payment?page=${page}`;
-      if (startDate && endDate) {
-        apiUrl += `&start_date=${formatApiDate(
-          startDate
-        )}&end_date=${formatApiDate(endDate)}`;
-      }
+const fetchEntries = useCallback(
+  async (page: number, isInitialLoad: boolean = false) => {
+    if (isFetchingMore && !isInitialLoad) return;
 
-      try {
+    if (isInitialLoad) {
+      setIsLoadingFirstTime(true);
+      setError(null);
+    } else {
+      setIsFetchingMore(true);
+    }
+
+    const formatApiDate = (date: Date) => date.toISOString().split("T")[0];
+    // FIXED: Use the correct endpoint that matches the Dart code
+    let apiUrl = `https://dewan-chemicals.majesticsofts.com/api/reports/data-entry/supplier-payment?page=${page}`;
+    if (startDate && endDate) {
+      apiUrl += `&start_date=${formatApiDate(startDate)}&end_date=${formatApiDate(endDate)}`;
+    }
+
+    try {
+      // Check internet status
+      const netInfo = await NetInfo.fetch();
+      const hasInternet = netInfo.isConnected && netInfo.isInternetReachable;
+
+      if (hasInternet) {
+        // ---- ONLINE MODE ----
         const response = await axios.get(apiUrl, {
           headers: { Accept: "application/json" },
         });
+
+
         const fetchedData = response.data.data.map(transformApiData);
+
         setEntries((prev) =>
           isInitialLoad ? fetchedData : [...prev, ...fetchedData]
         );
         setCurrentPage(response.data.current_page || 1);
         setTotalPages(response.data.total_pages || 1);
-      } catch (err: any) {
-        setError(
-          axios.isAxiosError(err) ? err.message : "An unknown error occurred."
-        );
-      } finally {
-        setIsLoadingFirstTime(false);
-        setIsFetchingMore(false);
+
+        // Save to cache
+        const toStore = {
+          entries: isInitialLoad ? fetchedData : [...entries, ...fetchedData],
+          currentPage: response.data.current_page || 1,
+          totalPages: response.data.total_pages || 1,
+        };
+        await AsyncStorage.setItem(SUPPLIER_CACHE_KEY, JSON.stringify(toStore));
+      } else {
+        // ---- OFFLINE MODE ----
+        const cached = await AsyncStorage.getItem(SUPPLIER_CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setEntries(parsed.entries || []);
+          setCurrentPage(parsed.currentPage || 1);
+          setTotalPages(parsed.totalPages || 1);
+        } else {
+          setError("No internet and no cached data available.");
+        }
       }
-    },
-    [startDate, endDate, isFetchingMore]
-  );
+    } catch (err: any) {
+      console.error('API Error:', err);
+      setError(
+        axios.isAxiosError(err) ? err.message : "An unknown error occurred."
+      );
+    } finally {
+      setIsLoadingFirstTime(false);
+      setIsFetchingMore(false);
+    }
+  },
+  [startDate, endDate, isFetchingMore, entries]
+);
 
   useEffect(() => {
     fetchEntries(1, true);

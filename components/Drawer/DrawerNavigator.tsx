@@ -34,6 +34,7 @@ import Adjustments from "@/screens/SubScreens/Adjustments";
 import Transfers from "@/screens/SubScreens/Transfers";
 import Expenses from "@/screens/SubScreens/Expenses";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const Drawer = createDrawerNavigator();
 
 
@@ -86,16 +87,23 @@ const handleNavigation = useCallback((screenName: string) => {
 }, [props.navigation]);
 
 const handleLogout = useCallback(async () => {
-    try {
-        await clearUser();
-        props.navigation.reset({
-        index: 0,
-        routes: [{ name: "Login" }],
-        });
-    } catch (error) {
-        console.error('Logout error:', error);
-        Alert.alert('Logout Error', 'Unable to logout. Please try again.');
-    }
+  try {
+    // Clear user session
+    await clearUser();
+
+    // Clear all AsyncStorage data (all cached entries)
+    await AsyncStorage.clear();
+    console.log("All cached data cleared");
+
+    // Reset navigation to Login screen
+    props.navigation.reset({
+      index: 0,
+      routes: [{ name: "Login" }],
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    Alert.alert("Logout Error", "Unable to logout. Please try again.");
+  }
 }, [clearUser, props.navigation]);
 
   const subMenuItems = [
