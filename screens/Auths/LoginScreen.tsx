@@ -439,11 +439,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                         ],
                       },
                     ]}>
-                    <Ionicons 
-                      name="mail-outline" 
-                      size={18} 
-                      color={emailFocused ? '#FF8F3C' : '#64748B'} 
-                    />
+
                   </Animated.View>
                   <Animated.Text 
                     style={[
@@ -466,8 +462,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                         color: emailFocused ? '#FF8F3C' : '#183284',
                       },
                     ]}>
-                    Email Address
-                  </Animated.Text>
+UserName                  </Animated.Text>
                 </View>
                 <TextInput
                   style={[
@@ -475,7 +470,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                     emailFocused && styles.inputFocused,
                     email && styles.inputFilled
                   ]}
-                  placeholder="your@email.com"
+                  placeholder="UserName or Email"
                   placeholderTextColor="#9CA3AF"
                   value={email}
                   onChangeText={setEmail}
@@ -505,11 +500,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
                         ],
                       },
                     ]}>
-                    <Ionicons 
-                      name="lock-closed-outline" 
-                      size={18} 
-                      color={passwordFocused ? '#FF8F3C' : '#64748B'} 
-                    />
+                   
                   </Animated.View>
                   <Animated.Text 
                     style={[

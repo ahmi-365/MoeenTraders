@@ -18,11 +18,30 @@ import {
   InventoryAlert,
   TableColumn,
   TopPerformer,
-} from "../types/dasboard"; // 👈 create a file for types
+} from "../types/dasboard";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
+
+// Define the navigation type for your drawer screens
+type DrawerParamList = {
+  Dashboard: undefined;
+  Products: undefined;
+  Customers: undefined;
+  Suppliers: undefined;
+  Sales: undefined;
+  SalesReturn: undefined;
+  PurchaseEntryReport: undefined;
+  PurchaseReturn: undefined;
+  CustomersPayments: undefined;
+  SuppliersPayments: undefined;
+  Adjustments: undefined;
+  Transfers: undefined;
+  Expenses: undefined;
+};
 
 export default function HomeScreen() {
   const { month, year } = useMonthYear();
+  const navigation = useNavigation<NavigationProp<DrawerParamList>>();
   const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(
     null
   );
@@ -66,7 +85,38 @@ const fetchDashboardData = async () => {
     setLoading(false);
     setRefreshing(false);
   }
-};  const monthName = (monthNumber: number) => {
+};
+
+  // Navigation handler for cards
+  const handleCardPress = (cardType: string) => {
+    switch (cardType) {
+      case "products":
+        navigation.navigate("Products");
+        break;
+      case "customers":
+        navigation.navigate("Customers");
+        break;
+      case "suppliers":
+        navigation.navigate("Suppliers");
+        break;
+      case "sales":
+        navigation.navigate("Sales");
+        break;
+      case "salesReturn":
+        navigation.navigate("SalesReturn");
+        break;
+      case "purchases":
+        navigation.navigate("PurchaseEntryReport");
+        break;
+      case "purchaseReturn":
+        navigation.navigate("PurchaseReturn");
+        break;
+      default:
+        console.log("Navigation not defined for:", cardType);
+    }
+  };
+
+  const monthName = (monthNumber: number) => {
     const months = [
       "Jan",
       "Feb",
@@ -194,10 +244,14 @@ const fetchDashboardData = async () => {
 
   const handleInventoryAlertPress = (item: InventoryAlert, index: number) => {
     console.log("Inventory alert pressed:", item);
+    // Navigate to Products screen to see inventory details
+    navigation.navigate("Products");
   };
 
   const handleTopPerformerPress = (item: TopPerformer, index: number) => {
     console.log("Top performer pressed:", item);
+    // Navigate to Products screen to see product details
+    navigation.navigate("Products");
   };
 
   if (loading) {
@@ -277,6 +331,7 @@ const fetchDashboardData = async () => {
             label="Total Products"
             icon="cube-outline"
             color="#FF8F3C"
+            onPress={() => handleCardPress("products")}
           />
           <InfoCard
             number={
@@ -287,6 +342,7 @@ const fetchDashboardData = async () => {
             label="Total Customers"
             icon="people-outline"
             color="#2196F3"
+            onPress={() => handleCardPress("customers")}
           />
         </View>
 
@@ -296,12 +352,14 @@ const fetchDashboardData = async () => {
             label="Total Suppliers"
             icon="storefront-outline"
             color="#FF9800"
+            onPress={() => handleCardPress("suppliers")}
           />
           <InfoCard
             number={`${widgets.total_category}`}
             label="Total Categories"
             icon="albums-outline"
             color="#9C27B0"
+            onPress={() => handleCardPress("products")}
           />
         </View>
 
@@ -313,12 +371,14 @@ const fetchDashboardData = async () => {
             label={`Total Sales (${widgets.total_sale_count})`}
             icon="cash-outline"
             color="#FF8F3C"
+            onPress={() => handleCardPress("sales")}
           />
           <InfoCard
             number={formatCurrency(widgets.total_sale_return)}
             label={`Sales Return (${widgets.total_sale_return_count})`}
             icon="arrow-undo-outline"
             color="#FF5722"
+            onPress={() => handleCardPress("salesReturn")}
           />
         </View>
 
@@ -330,6 +390,7 @@ const fetchDashboardData = async () => {
             label={`Total Purchases (${widgets.total_purchase_count})`}
             icon="cart-outline"
             color="#2196F3"
+            onPress={() => handleCardPress("purchases")}
           />
         </View>
         <View style={styles.cardRow}>
@@ -338,6 +399,7 @@ const fetchDashboardData = async () => {
             label={`Purchase Return (${widgets.total_purchase_return_count})`}
             icon="refresh-outline"
             color="#FF9800"
+            onPress={() => handleCardPress("purchaseReturn")}
           />
         </View>
 

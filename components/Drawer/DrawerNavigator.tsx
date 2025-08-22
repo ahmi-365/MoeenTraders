@@ -41,19 +41,21 @@ const Drawer = createDrawerNavigator();
 // --- Custom Drawer Content Component ---
 const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
   const { user, status, clearUser } = useUserStore();
-  const [expandReport, setExpandReport] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false); // Prevent multiple navigations
-  const insets = useSafeAreaInsets(); // <-- ADD THIS LINE
+  const [expandReport, setExpandReport] = useState(true); // Changed to true for default open
+  const [isNavigating, setIsNavigating] = useState(false);
+  const insets = useSafeAreaInsets();
 
-  // --- ADD THIS ANIMATION LOGIC BACK ---
-  const animatedHeight = useRef(new Animated.Value(0)).current;
-  const animatedOpacity = useRef(new Animated.Value(0)).current;
+  // Get current route name
+  const currentRoute = props.state.routeNames[props.state.index];
 
-  const SUBMENU_ITEM_HEIGHT = 50; 
+  // --- Animation logic - start with opened state ---
+  const SUBMENU_ITEM_HEIGHT = 42; 
   const SUBMENU_ITEMS_COUNT = 12; 
   const TOTAL_SUBMENU_HEIGHT = SUBMENU_ITEMS_COUNT * SUBMENU_ITEM_HEIGHT;
+  
+  const animatedHeight = useRef(new Animated.Value(TOTAL_SUBMENU_HEIGHT)).current; // Start opened
+  const animatedOpacity = useRef(new Animated.Value(1)).current; // Start visible
 
-// --- REPLACE YOUR OLD FUNCTIONS WITH THIS BLOCK ---
 const toggleReport = useCallback(() => {
     const targetValue = expandReport ? 0 : 1;
     setExpandReport(!expandReport);
@@ -76,9 +78,7 @@ const toggleReport = useCallback(() => {
 
 const handleNavigation = useCallback((screenName: string) => {
     try {
-        // Navigate to the screen
         props.navigation.navigate(screenName);
-        // And close the drawer for better UX
         props.navigation.closeDrawer(); 
     } catch (error) {
         console.error('Navigation error:', error);
@@ -88,14 +88,10 @@ const handleNavigation = useCallback((screenName: string) => {
 
 const handleLogout = useCallback(async () => {
   try {
-    // Clear user session
     await clearUser();
-
-    // Clear all AsyncStorage data (all cached entries)
     await AsyncStorage.clear();
     console.log("All cached data cleared");
 
-    // Reset navigation to Login screen
     props.navigation.reset({
       index: 0,
       routes: [{ name: "Login" }],
@@ -137,9 +133,13 @@ const handleLogout = useCallback(async () => {
     { name: "Expenses", icon: "receipt-outline", screen: "Expenses" },
   ];
 
+  // Helper function to check if a screen is active
+  const isActiveScreen = (screenName: string) => {
+    return currentRoute === screenName;
+  };
+
 return (
     <View style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
-      {/* HEADER: Reduced padding - use smaller value or just status bar height */}
       <View style={[styles.header, { 
         paddingTop: insets.top > 0 ? Math.max(insets.top + 20, 8) : 8 
       }]}>
@@ -156,7 +156,6 @@ return (
         </View>
       </View>
 
-      {/* SCROLLABLE AREA: Remove default padding and content insets */}
       <DrawerContentScrollView 
         {...props} 
         showsVerticalScrollIndicator={false}
@@ -166,12 +165,25 @@ return (
         contentInset={{ top: 0, left: 0, bottom: 0, right: 0 }}
       >
         <View style={styles.menuContainer}>
-          {/* All your TouchabaleOpacity menu items go here, unchanged */}
-          <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigation("Dashboard")} activeOpacity={0.7}>
+          {/* Dashboard Menu Item with Active State */}
+          <TouchableOpacity 
+            style={[
+              styles.menuItem,
+              isActiveScreen("Dashboard") && styles.activeMenuItem
+            ]} 
+            onPress={() => handleNavigation("Dashboard")} 
+            activeOpacity={0.7}
+          >
             <Ionicons name="speedometer-outline" size={22} color="#333" />
-            <Text style={styles.menuText}>Dashboard</Text>
+            <Text style={[
+              styles.menuText,
+              isActiveScreen("Dashboard") && styles.activeMenuText
+            ]}>
+              Dashboard
+            </Text>
           </TouchableOpacity>
 
+          {/* Data Entry Report Menu Item */}
           <TouchableOpacity style={styles.menuItem} onPress={toggleReport} activeOpacity={0.7}>
             <Ionicons name="document-text-outline" size={22} color="#333" />
             <Text style={styles.menuText}>Data Entry Report</Text>
@@ -183,6 +195,7 @@ return (
             />
           </TouchableOpacity>
 
+          {/* Submenu with Active State Highlighting */}
           <Animated.View
             style={[
               styles.subMenu,
@@ -195,19 +208,26 @@ return (
             {subMenuItems.map((item) => (
               <TouchableOpacity
                 key={item.screen}
-                style={styles.subMenuItem}
+                style={[
+                  styles.subMenuItem,
+                  isActiveScreen(item.screen) && styles.activeSubMenuItem
+                ]}
                 onPress={() => handleNavigation(item.screen)}
                 activeOpacity={0.7}
               >
                 <Ionicons name={item.icon as any} size={20} color="#555" />
-                <Text style={styles.subMenuText}>{item.name}</Text>
+                <Text style={[
+                  styles.subMenuText,
+                  isActiveScreen(item.screen) && styles.activeSubMenuText
+                ]}>
+                  {item.name}
+                </Text>
               </TouchableOpacity>
             ))}
           </Animated.View>
         </View>
       </DrawerContentScrollView>
 
-      {/* FOOTER: We apply the bottom inset as padding here for devices like iPhone X */}
       <View style={[styles.footer, { paddingBottom: insets.bottom > 0 ? insets.bottom : 20 }]}>
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.7}>
           <Ionicons name="log-out-outline" size={22} color="#FF8F3C" />
@@ -217,6 +237,7 @@ return (
     </View>
 );
 };
+
 const DrawerNavigator = () => {
   return (
     <Drawer.Navigator
@@ -297,12 +318,10 @@ const styles = StyleSheet.create({
   // Updated Drawer Container Styles
 drawerContainer: {
   flexGrow: 1,
-  justifyContent: 'space-between', // <--- ADD THIS LINE
+  justifyContent: 'space-between',
   paddingBottom: 20,
 },
-  drawerContent: {
-    // flex: 1,
-  },
+  drawerContent: {},
   menuContainer: {
     paddingHorizontal: 15,
     paddingTop: 15,
@@ -354,7 +373,18 @@ drawerContainer: {
     paddingVertical: 8,
     paddingHorizontal: 10,
     marginVertical: 1,
-    borderRadius: 8, // Add border radius for better visual feedback
+    borderRadius: 8,
+  },
+  // Active menu item style
+  activeMenuItem: {
+    backgroundColor: "#fff",
+    borderLeftWidth: 3,
+    borderLeftColor: "#183284",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    elevation: 2,
   },
   menuText: {
     fontSize: 16,
@@ -362,6 +392,11 @@ drawerContainer: {
     color: "#333",
     fontWeight: "600",
     flex: 1,
+  },
+  // Active menu text style
+  activeMenuText: {
+    color: "#183284",
+    fontWeight: "700",
   },
   chevron: {
     marginLeft: "auto",
@@ -385,18 +420,34 @@ drawerContainer: {
   subMenuItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 8,
     paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
-    minHeight: 48,
-    borderRadius: 4, // Add border radius
+    minHeight: 40,
+    borderRadius: 4,
+  },
+  // Active submenu item style
+  activeSubMenuItem: {
+    backgroundColor: "#fff",
+    borderLeftWidth: 3,
+    borderLeftColor: "#183284",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    elevation: 1,
   },
   subMenuText: {
     fontSize: 15,
     marginLeft: 12,
     color: "#555",
     fontWeight: "500",
+  },
+  // Active submenu text style
+  activeSubMenuText: {
+    color: "#183284",
+    fontWeight: "700",
   },
 
   // Footer Styles
@@ -413,7 +464,7 @@ footer: {
     alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 10,
-    borderRadius: 8, // Add border radius
+    borderRadius: 8,
   },
   logoutText: {
     fontSize: 16,

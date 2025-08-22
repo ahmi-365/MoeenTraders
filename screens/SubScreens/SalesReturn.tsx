@@ -308,7 +308,7 @@ const fetchEntries = async (page: number, isInitialLoad: boolean = false) => {
         setCurrentPage(parsed.currentPage || 1);
         setTotalPages(parsed.totalPages || 1);
       } else {
-        setError("No internet and no cached data available.");
+        setError("No internet available.");
       }
     }
   } catch (err) {
